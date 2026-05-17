@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.configRepo = exports.timerRepo = exports.slashCommandHashRepo = exports.redisClient = void 0;
+const environment_1 = require("../environment");
+const config_1 = require("./config");
+const redis_with_cache_1 = require("./redis-with-cache");
+const timer_1 = require("./timer");
+const command_1 = require("./command");
+exports.redisClient = new redis_with_cache_1.RedisClientWithCache(environment_1.environment.redis.url);
+exports.slashCommandHashRepo = new command_1.SlashCommandHashRepository(exports.redisClient, environment_1.environment.botId);
+exports.timerRepo = new timer_1.TimerRepository(exports.redisClient);
+exports.configRepo = new config_1.ConfigRepository(exports.redisClient);
