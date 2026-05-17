@@ -1,23 +1,29 @@
-# TTT-Timer Discord Bot
+# Sumbing Weather Discord Bot
 
-This discord bot was built for virtual team time trials on [Zwift](https://zwift.com/) organized by [WTRL](https://www.wtrl.racing/). It takes the position of the DC and announces who has to lead next and for how long. Of course, the bot is not a replacement for a real coach but helps you to stay organized during an exhausting team time trial. The bot joins the discord call with your team mates and gives voice commands to everyone.
+This Discord bot was built to provide weather information and voice-based instructions inside a Discord voice channel. It helps users by giving automated announcements and real-time updates.
 
-This is a follow-up project of the [TTT-Timer Web App](https://andipaetzold.github.io/tttt/).
+The bot joins a Discord call and delivers voice commands or information to everyone in the channel.
+
+This project is a customized version of the original bot, adapted for specific use cases such as weather monitoring and automated voice notifications.
+This project is based on the original TTT-Timer Discord Bot:
+https://github.com/andipaetzold/tttt-discord
 
 ## Installation
 
-Click [here](https://discord.com/api/oauth2/authorize?client_id=806979974594560060&permissions=3155968&scope=bot+applications.commands) to install the bot to your server
+Click here to invite the bot to your server:
+
+https://discord.com/oauth2/authorize?client_id=1505002488409882684
 
 You will be asked to grant multiple permissions:
 
-| Permission      | Description                                                                                                                                                |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Send Messages   | Allows the bot to send messages to a text channels                                                                                                         |
-| Manage Messages | Allows the bot to update other users messages. This is used to create a button-like behavior when clicking on the emojis below the timer's status message. |
-| Connect         | Allows the bot to join a voice channel                                                                                                                     |
-| Speak           | Allows the bot to send audio / voice to a voice channel                                                                                                    |
+| Permission      | Description                                                                 |
+| --------------- | --------------------------------------------------------------------------- |
+| Send Messages   | Allows the bot to send messages to a text channels                          |
+| Manage Messages | Allows the bot to update messages for interactive behavior                  |
+| Connect         | Allows the bot to join a voice channel                                      |
+| Speak           | Allows the bot to send audio / voice to a voice channel                     |
 
-<img src="./docs/authorize.png" height="500">
+<img src="./docs/authorize.png" height="500">                                                                                              
 
 ## Usage
 
