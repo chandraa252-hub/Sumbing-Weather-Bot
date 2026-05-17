@@ -22,208 +22,182 @@ You will be asked to grant multiple permissions:
 | Manage Messages | Allows the bot to update messages for interactive behavior                  |
 | Connect         | Allows the bot to join a voice channel                                      |
 | Speak           | Allows the bot to send audio / voice to a voice channel                     |
-
-<img src="./docs/authorize.png" height="500">                                                                                              
+                                                                                           
 
 ## Usage
 
--   All commands are case insensitive to avoid frustration when interacting with the bot during a race.
--   There is only 1 configuration for each server. Changing the configuration in different text channels using the commands below, will alter the same configuration.
+- All commands are case insensitive.
+- There is only one configuration per server. Changes made in any channel will affect the same configuration.
 
 ### Documentation Syntax
 
-| Syntax               | Meaning                                                                                                                                                                          |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<name>` or `<time>` | These are command options that you can individually define. Replace these options including the `<` and `>` with your specific configuration.                                    |
-| `[<name>]`           | Angle brackets represent optional options. These may be left out and either lead to a different behaviour or a fallback value will be used                                       |
-| `@Andi`              | Used in the examples to represent [Discord mentions](https://discordia.me/en/mentions). Do not actually send the `@` symbol but use the GitHub client to select a specific user. |
+| Syntax                  | Meaning                                                                 |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `<weather>` or `<time>` | Required parameter                                                     |
+| `[<weather>]`           | Optional parameter                                                     |
+| `@user`                 | Represents a Discord mention                                           |
+
 
 ### Commands
 
-#### `/timer athlete <athlete> <time>`
+#### `/timer weathers [<weather1>] [<time1>] [<weather2>] [<time2>] ...`
 
-Set the lead time of an athlete. The user must be added to the athletes list before using the `/timer athletes` command.
-You can also mention a user instead of typing their name.
+If all options are omitted, returns the configured weather list.
 
-Example:
-
-```bash
-/timer athlete Andi 45
-
-// or
-
-/timer athlete @Andi 45
-```
-
-_Sets the lead time of Andi to 45 seconds_
-
-#### `/timer athletes [<athlete1>] [<time1>] [<athlete2>] [<time2>] ...`
-
-If all options are omitted, returns the configured athletes.
-
-Otherwise, sets the list of athletes in the team and their lead times. The lead times are optional and default to 30 seconds.
-
-You can also mention a user instead of typing their name. The voice commands will use the username at the time of sending this command, so make sure to change it to something pronouncable.
-
-Examples:
-
-```bash
-/timer athletes Andi:45 Victor
-
-// or
-
-/timer athletes @Andi:45 Victor
-```
-
-_The team now includes Andi and Victor. Andi leads for 45 seconds, Victor for 30._
-
-<img src="./docs/slash-athletes.png" height="100">
-
-#### `/timer delay [<time>]`
-
-If `<time>` is omitted, returns the configured start delay
-
-Otherwise, sets the start delay in seconds.
+Otherwise, sets the list of weather types and their rotation durations. Time values are optional and default to 30 seconds.
 
 Example:
 
 ```bash
-/timer delay 300
+/timer weathers weather1:extreme weather time1:210 weather2:normal weather time2:480
 ```
 
-_The timer will wait for 5 minutes before giving commands_
+The rotation now includes multiple weather types with custom durations.
 
-#### `/timer fresh [<athlete>]`
-
-The athlete won't be skipped anymore. If the user sending this command was mentioned when configuring the timer the name can be omitted. This command doesn't change the order of the athletes.
-
-Examples:
-
-```bash
-/timer fresh Andi
-```
-
-_Andi will join the lead rotation again_
-
-```bash
-/timer fresh
-```
-
-_If the user sending this message was mentioned when configuring the timer, they will join the lead rotation again_
-
-#### `/timer language [<language>]`
-
-If `<language>` is omitted, the bot replies with the configured language.
-
-Otherwise, sets the language of the voice commands. Available languages are:
-
--   English (`/timer language en`)
--   German (`/timer language de`)
--   Czech (`/timer language cz`)
-
-#### `/timer toast [<athlete>]`
-
-The athlete is skipped until writing `/timer fresh [<name>]`. If the mentioned athlete is currently leading, the remaining time is skipped and the next athlete is announced with "Go &lt;name&gt;".
-
-If the user sending this command was mentioned when configuring the timer the name can be omitted. This command doesn't change the order of the athletes.
-
-Example:
-
-```bash
-/timer toast Andi
-```
-
-_Andi is ignored when the bot announces the next leading athlete_
-
-```bash
-/timer fresh
-```
-
-_If the user sending this message was mentioned when configuring the timer, they will be ignored when the bot announces the next leading athlete_
+---
 
 #### `/timer help`
 
-Shows help message
+Shows a list of available commands, project links, and developer information.
 
-<img src="./docs/help.png" height="300">
-
-#### `/timer plus <time>`
-
-Adds time to the timer of the currently leading athlete. This is temporary and on the next rotation, the athlete will do their previously configured lead time again.
-
-Example:
+Example output:
 
 ```bash
-/timer plus 15
+/timer start — Start the weather timer. Join a voice channel first.
+/timer stop — Stop the timer and disconnect from voice.
+/timer weathers — View or set weather names and rotation durations.
+/timer help — Show this help message.
+/timer reset — Stop the timer and reset all server configuration.
+/timer skip — Skip to the next weather in the rotation.
+
+Discord Server (Questions/Feedback)
+https://discord.gg/jB3J3xfmGf
+
+Full Documentation
+https://github.com/chandraa252-hub/Sumbing-Weather-Timer
+
+Web App
+https://github.com/chandraa252-hub
+
+Support this project
+https://discord.com/users/762372166733529088
+
+Made by Stephanus Chandra Wijaya
 ```
 
-_Adds 15 seconds to the clock of the currently leading athlete_
+---
 
 #### `/timer reset`
 
 Stops the timer and resets all configuration of the bot for your server.
 
+---
+
 #### `/timer skip`
 
-The remaining time of the current athlete is skipped and the next athlete is announced with "Go &lt;name&gt;". This is a one-time skip.
+Skips the current weather in the rotation and moves to the next one.
 
-If the timer hasn't started yet and is still waiting for the start delay to tick down, this command will skip the remaining time and immediately start the race with the first athlete.
+If the timer hasn't started yet, this command will immediately start the process.
+
+---
 
 #### `/timer start`
 
-Starts the timer. The bot joins your current voice channel or the channel from a previous start.
+Starts the weather timer. The bot joins your current voice channel or uses the previous one.
+
+---
 
 #### `/timer stop`
 
 Stops the timer and leaves the voice channel.
 
+
+
 ## Status Message
 
-When starting the timer using `/timer start`, a message is send to the current channel. This message automatically updates and includes the currently leading athlete and the next athlete including their leading times.
+When starting the timer using `/timer start`, a message is sent to the current channel. This message automatically updates and shows the current weather, the next weather, and additional information or warnings.
 
-The bot automatically reacts with three emojis to this message. These can be used as buttons to control the bot during a race and to avoid typing.
+Example:
 
-| Emoji | Equivalent Slash Command          | Note                                                                     |
-| ----- | --------------------------------- | ------------------------------------------------------------------------ |
-| ➕    | `/timer plus 10`                  |
-| ⏭️    | `/timer skip`                     |                                                                          |
-| ☠️    | `/timer toast` and `/timer fresh` | This only works if the user was mentioned when athletes were configures. |
+```text
+Current Weather
+🌤️ Normal Weather (7m 14s remaining)
 
-<img src="./docs/status-message.png" height="250">
+Next Weather
+🌩️ Extreme Weather
+
+
+⚠️ Stay prepared for sudden weather changes. ⚠️
+Be careful during thunderstorm weather.
+
+☕ STMJ is recommended during nighttime weather.
+STMJ effect duration: 5 minutes.
+
+🪨 In Watu Kotak, STMJ + Torch is required
+during Extreme Weather between 02:00 - 04:00.
+
+Controls:
+⏭️ Skip to advance when weather changes to normal or dry conditions
+⏹️ Stop the weather timer or use /timer stop
+```
+
+The message will continuously update based on the current timer and weather rotation.
+
+The bot automatically reacts with control emojis to this message. These can be used as buttons to control the bot without typing commands.
+
+| Emoji | Equivalent Slash Command | Note                                      |
+| ----- | ------------------------ | ----------------------------------------- |
+| ⏭️    | `/timer skip`           | Skip to the next weather in the rotation  |
+| ⏹️    | `/timer stop`           | Stop the timer and disconnect the bot     |
+
 
 ## Voice Commands
 
-The bot automatically gives commands 1/2/5/10/15/30 seconds and 1/2/3/5/10 minutes before a change or the start of the race. Also, a command is given on the actual change/start and when skipping an athlete.
+The bot automatically gives voice notifications 1/5/10/15/30 seconds and 1/3/5/10 minutes before a weather change or before the timer starts.
 
-## Parallel timers
+A voice notification is also played when:
+- the timer starts
+- switching to the next weather
+- skipping the current weather
 
-Discord does not allow a bot to join multiple voice call at a time. To run multiple timers on the same server in parallel, I am hosting multiple instances of the TTT-Timer. The additional bots have the same behaviour as the main bot, but with a separate configuration and a different command prefix.
+## Parallel Timers
 
-| Slash Command | Install Link                                                                                                                               |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `/timer`      | [Install Bot 1](https://discord.com/api/oauth2/authorize?client_id=806979974594560060&permissions=3155968&scope=bot+applications.commands) |
-| `/timer2`     | [Install Bot 2](https://discord.com/api/oauth2/authorize?client_id=894298274343837696&permissions=3155968&scope=bot+applications.commands) |
+Discord does not allow a bot to join multiple voice channels at the same time.
+
+To run multiple timers in parallel on the same server, you can use more than one bot instance.
+
+| Bot              | Description                         | Install Link                                                                 |
+| ---------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
+| Sumbing Timer    | Main weather timer bot              | https://discord.com/oauth2/authorize?client_id=1505002488409882684          |
+| TTT-Timer (Andi) | Backup timer (alternative instance) | https://discord.com/api/oauth2/authorize?client_id=806979974594560060&permissions=3155968&scope=bot+applications.commands |
+
+The backup bot behaves similarly but runs independently with its own configuration.
+
+---
 
 ## Data Privacy
 
-The discord bot is hosted on [Heroku](https://www.heroku.com/) using servers in Europe. The voice in generated using Google Translate. Therefore, the athlete names are visible to them.
+This bot does not store or log any personal data outside of what is required for its functionality.
 
-The bot doesn't log or store any information that is not required for the use or monitoring of the bot. All information is automatically deleted when removing the bot from your server.
+All configurations are temporary and tied to your server session. Removing the bot from your server will automatically remove all related data.
 
-All code is publicly available on [Github](https://github.com/andipaetzold/tttt-discord).
+The source code of this project is publicly available on GitHub.
+
+---
 
 ## Troubleshooting
 
-| Problem                                             | Possible Solutions                                                                                                                            |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Slash commands are not displayed in Discord         | Slash commands were only added in a later update. They will only show up after reinviting the bot to your server using the install link.      |
-| The ☠️ button of the status message doesn't work    | You can only use this button if you were mentioned during the timer setup.                                                                    |
-| The ➕ and ⏭️ button stay clicked                   | The bot requires the "Manage Messages" permission to remove your reaction from the status message in order to provide a button-like behaviour |
-| The timer doesn't react ti any chat message command | Make sure the bot has permission to read and write messages in your channel. Without those permissions, the bot cannot be used                |
+| Problem                                      | Possible Solution                                                                 |
+| -------------------------------------------- | --------------------------------------------------------------------------------- |
+| Slash commands are not visible               | Try reinviting the bot using the installation link                               |
+| The bot does not respond to commands         | Make sure the bot has permission to read and send messages in the channel        |
+| The timer does not start                     | Ensure you are connected to a voice channel before running `/timer start`        |
+| The skip button does not work                | Make sure the bot has permission to manage messages and reactions                |
+| The bot does not join voice channel          | Check voice channel permissions (Connect & Speak)
 
 ## Docker
 
-The application is pushed to [Docker Hub](https://hub.docker.com/repository/docker/andipaetzold/tttt-discord).
+The application is available on Docker Hub.
 
 You can spin up your own instance of the bot using the following docker compose configuration:
 
@@ -238,11 +212,11 @@ services:
         volumes:
             - redis_data:/data
 
-    tttt-discord:
-        image: andipaetzold/tttt-discord:latest
+    sumbing-weather-timer:
+        image: <your-docker-image>
         restart: always
         environment:
-            - DISCORD_TOKEN=<token>
+            - DISCORD_TOKEN=<your_token>
             - REDIS_URL=redis://redis:6379
         links:
             - redis
@@ -250,14 +224,27 @@ services:
             - redis
 ```
 
+> Note: Replace `<your-docker-image>` with your Docker Hub image after publishing.
+
+---
+
 ## Need help?
 
-Join the [TTT-Timer Discord server](https://discord.gg/SUccRhqswq) or [send an E-mail](mailto:tttt-discord@andipaetzold.com)
+Join the Discord server for questions, feedback, or support:
+
+https://discord.gg/jB3J3xfmGf
+
+Full Documentation:
+https://github.com/chandraa252-hub/Sumbing-Weather-Timer
+
+---
 
 ## Contact
 
-Andi Pätzold
+**Stephanus Chandra Wijaya**
 
-[E-Mail](mailto:tttt-discord@andipaetzold.com)
+GitHub:  
+https://github.com/chandraa252-hub  
 
-Support this project using [PayPal](https://paypal.me/andipaetzold)
+Discord:  
+https://discord.com/users/762372166733529088
