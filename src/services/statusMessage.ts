@@ -21,11 +21,11 @@ export const BUTTON_STOP = "timer_stop";
 
 /** Discord collapses extra `\n` in embeds; braille blank lines keep visible vertical space. */
 const BLANK_LINE = "\u2800";
-/** Double gap between Next Weather and tips (2× a single blank line). */
-const WEATHER_TO_TIPS_GAP = `${BLANK_LINE}\n${BLANK_LINE}`;
+/** Single gap between Next Weather and tips. */
+const WEATHER_TO_TIPS_GAP = `${BLANK_LINE}`;
 
 const STATUS_TIPS = [
-    "⚠️ Stay prepared for sudden weather changes. ⚠️",
+    "⚠️ Stay prepared for sudden weather changes.",
     "Be careful during thunderstorm weather.",
     "",
     "☕ STMJ is recommended during nighttime weather.",
@@ -54,12 +54,13 @@ function buildCurrentWeatherSection(config: Config, timer: Timer): string {
 
     if (timer.started) {
         const remainingSeconds = timer.nextChangeTime - getTime();
-        return [`# Current Weather`, `# ${weatherLine} (${formatRemainingDuration(remainingSeconds)} remaining)`].join("\n");
+        return [`# Current Weather`, `# ${weatherLine}`, `# (${formatRemainingDuration(remainingSeconds)} remaining)`].join("\n");
     }
 
     return [
         `# Current Weather`,
-        `# ${getWeatherEmoji(currentWeather.name)} ${formatWeatherName(currentWeather.name)} (starts <t:${timer.nextChangeTime}:R>)`,
+        `# ${getWeatherEmoji(currentWeather.name)} ${formatWeatherName(currentWeather.name)}`,
+        `# (starts <t:${timer.nextChangeTime}:R>)`,
     ].join("\n");
 }
 
