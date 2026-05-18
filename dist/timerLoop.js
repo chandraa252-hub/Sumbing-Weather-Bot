@@ -63,12 +63,11 @@ async function tickTimer(timer, now) {
                 nextChangeTime: now + config.athletes[nextAthleteIndex].time,
                 started: true,
             }));
-            // Only update the status message when weather actually changes — not every tick.
-            // The countdown is handled client-side by Discord's <t:TIMESTAMP:R> format,
-            // so no per-second edits are needed.
-            if (timer.status) {
-                await (0, statusMessage_1.updateStatusMessage)(timer.guildId, scope);
-            }
+        }
+        // Update status message every 5 seconds to keep the countdown live without
+        // hitting Discord rate limits. Also always update on weather change (remainingSeconds === 0).
+        if (timer.status && timer.started && (remainingSeconds === 0 || now % 5 === 0)) {
+            await (0, statusMessage_1.updateStatusMessage)(timer.guildId, scope);
         }
         // Voice is optional — failure here must NOT kill the timer or the countdown
         let connection;
