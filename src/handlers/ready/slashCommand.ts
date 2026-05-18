@@ -7,7 +7,7 @@ import { slashCommandHashRepo } from "../../persistence";
 import logger from "../../services/logger";
 
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 4;
+const SLASH_COMMAND_REGISTRATION_VERSION = 5;
 
 export async function initCommands() {
     const command = getSlashCommand();
@@ -74,11 +74,6 @@ const command: Omit<ChatInputApplicationCommandData, "name"> = {
         },
         {
             type: ApplicationCommandOptionType.Subcommand,
-            name: SLASH_COMMAND.commands.help,
-            description: "Help",
-        },
-        {
-            type: ApplicationCommandOptionType.Subcommand,
             name: SLASH_COMMAND.commands.skip.name,
             description: "Skip the current weather",
         },
@@ -86,6 +81,11 @@ const command: Omit<ChatInputApplicationCommandData, "name"> = {
             type: ApplicationCommandOptionType.Subcommand,
             name: SLASH_COMMAND.commands.reset.name,
             description: "Stops the timer and resets all configuration",
+        },
+        {
+            type: ApplicationCommandOptionType.Subcommand,
+            name: SLASH_COMMAND.commands.help,
+            description: "Help",
         },
         {
             type: ApplicationCommandOptionType.Subcommand,

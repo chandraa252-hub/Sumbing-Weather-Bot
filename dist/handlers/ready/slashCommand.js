@@ -14,7 +14,7 @@ const discord_1 = require("../../discord");
 const persistence_1 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 4;
+const SLASH_COMMAND_REGISTRATION_VERSION = 5;
 async function initCommands() {
     const command = getSlashCommand();
     const commandHash = (0, object_hash_1.default)({ version: SLASH_COMMAND_REGISTRATION_VERSION, command });
@@ -73,11 +73,6 @@ const command = {
         },
         {
             type: discord_js_1.ApplicationCommandOptionType.Subcommand,
-            name: constants_1.SLASH_COMMAND.commands.help,
-            description: "Help",
-        },
-        {
-            type: discord_js_1.ApplicationCommandOptionType.Subcommand,
             name: constants_1.SLASH_COMMAND.commands.skip.name,
             description: "Skip the current weather",
         },
@@ -85,6 +80,11 @@ const command = {
             type: discord_js_1.ApplicationCommandOptionType.Subcommand,
             name: constants_1.SLASH_COMMAND.commands.reset.name,
             description: "Stops the timer and resets all configuration",
+        },
+        {
+            type: discord_js_1.ApplicationCommandOptionType.Subcommand,
+            name: constants_1.SLASH_COMMAND.commands.help,
+            description: "Help",
         },
         {
             type: discord_js_1.ApplicationCommandOptionType.Subcommand,

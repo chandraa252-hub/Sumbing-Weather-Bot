@@ -5,7 +5,7 @@ const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
 exports.environment = {
     botId: process.env.BOT_ID ?? "1",
-    mainBot: process.env.BOT_ID === "1",
+    mainBot: (process.env.BOT_ID ?? "1") === "1",
     discord: {
         token: process.env.DISCORD_TOKEN,
     },
