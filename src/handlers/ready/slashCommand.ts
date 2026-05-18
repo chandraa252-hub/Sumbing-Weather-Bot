@@ -7,7 +7,7 @@ import { slashCommandHashRepo } from "../../persistence";
 import logger from "../../services/logger";
 
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 5;
+const SLASH_COMMAND_REGISTRATION_VERSION = 6;
 
 export async function initCommands() {
     const command = getSlashCommand();
@@ -86,6 +86,23 @@ const command: Omit<ChatInputApplicationCommandData, "name"> = {
             type: ApplicationCommandOptionType.Subcommand,
             name: SLASH_COMMAND.commands.help,
             description: "Help",
+        },
+        {
+            type: ApplicationCommandOptionType.Subcommand,
+            name: SLASH_COMMAND.commands.language,
+            description: "Set the announcement language",
+            options: [
+                {
+                    type: ApplicationCommandOptionType.String,
+                    name: "language",
+                    description: "Choose language",
+                    required: true,
+                    choices: [
+                        { name: "English 🇬🇧", value: "en" },
+                        { name: "Indonesia 🇮🇩", value: "id" },
+                    ],
+                },
+            ],
         },
         {
             type: ApplicationCommandOptionType.Subcommand,

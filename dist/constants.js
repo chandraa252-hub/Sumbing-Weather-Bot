@@ -28,5 +28,6 @@ exports.SLASH_COMMAND = {
         reset: {
             name: "reset",
         },
+        language: "language",
     },
 };

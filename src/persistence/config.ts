@@ -32,7 +32,6 @@ export class ConfigRepository {
             ...DEFAULT_CONFIG,
             ...(config ? config : {}),
             guildId,
-            languageKey: "en",
         };
     }
 

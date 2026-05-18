@@ -24,16 +24,30 @@ exports.BUTTON_STOP = "timer_stop";
 const BLANK_LINE = "\u2800";
 /** Single gap between Next Weather and tips. */
 const WEATHER_TO_TIPS_GAP = `${BLANK_LINE}`;
-const STATUS_TIPS = [
-    "⚠️ Stay prepared for sudden weather changes.",
-    "Be careful during thunderstorm weather.",
-    "",
-    "☕ STMJ is recommended during nighttime weather.",
-    "STMJ effect duration: 5 minutes.",
-    "",
-    "🪨 In Watu Kotak, STMJ + Torch is required",
-    "during Extreme Weather between 02:00 - 04:00.",
-].join("\n");
+function getStatusTips(languageKey) {
+    if (languageKey === "id") {
+        return [
+            "⚠️ Bersiaplah menghadapi perubahan cuaca mendadak.",
+            "Berhati-hati saat cuaca badai petir.",
+            "",
+            "☕ STMJ dianjurkan saat cuaca malam hari.",
+            "Durasi efek STMJ: 5 menit.",
+            "",
+            "🪨 Di Watu Kotak, STMJ + Obor diperlukan",
+            "saat Cuaca Ekstrem antara pukul 02:00 - 04:00.",
+        ].join("\n");
+    }
+    return [
+        "⚠️ Stay prepared for sudden weather changes.",
+        "Be careful during thunderstorm weather.",
+        "",
+        "☕ STMJ is recommended during nighttime weather.",
+        "STMJ effect duration: 5 minutes.",
+        "",
+        "🪨 In Watu Kotak, STMJ + Torch is required",
+        "during Extreme Weather between 02:00 - 04:00.",
+    ].join("\n");
+}
 function createTimerButtons() {
     return new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
         .setCustomId(exports.BUTTON_SKIP)
@@ -46,22 +60,37 @@ function createTimerButtons() {
 function buildCurrentWeatherSection(config, timer) {
     const currentWeather = config.athletes[timer.currentAthleteIndex];
     const weatherLine = (0, weatherDisplay_1.formatWeatherLine)(currentWeather);
+    const header = config.languageKey === "id" ? "# Cuaca Saat Ini" : "# Current Weather";
     if (timer.started) {
         const remainingSeconds = timer.nextChangeTime - (0, time_1.getTime)();
-        return [`# Current Weather`, `# ${weatherLine}`, `# (${(0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds)} remaining)`].join("\n");
+        const remainingLabel = config.languageKey === "id"
+            ? `(${(0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds)} tersisa)`
+            : `(${(0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds)} remaining)`;
+        return [header, `# ${weatherLine}`, `# ${remainingLabel}`].join("\n");
     }
+    const startsLabel = config.languageKey === "id"
+        ? `(dimulai <t:${timer.nextChangeTime}:R>)`
+        : `(starts <t:${timer.nextChangeTime}:R>)`;
     return [
-        `# Current Weather`,
+        header,
         `# ${(0, weatherDisplay_1.getWeatherEmoji)(currentWeather.name)} ${(0, weatherDisplay_1.formatWeatherName)(currentWeather.name)}`,
-        `# (starts <t:${timer.nextChangeTime}:R>)`,
+        `# ${startsLabel}`,
     ].join("\n");
 }
 function buildNextWeatherSection(config, timer) {
     const nextWeather = config.athletes[(0, timer_1.getNextAthleteIndex)(config, timer)];
-    return [`## Next Weather`, `### ${(0, weatherDisplay_1.formatWeatherLine)(nextWeather)}`].join("\n");
+    const header = config.languageKey === "id" ? "## Cuaca Selanjutnya" : "## Next Weather";
+    return [header, `### ${(0, weatherDisplay_1.formatWeatherLine)(nextWeather)}`].join("\n");
 }
 /** Discord subtext (`-#`) — smallest size available in embeds. */
-function buildControlsSection() {
+function buildControlsSection(config) {
+    if (config.languageKey === "id") {
+        return [
+            `-# Kontrol:`,
+            `-# ${emojis_1.EMOJI_SKIP} Lewati untuk maju saat cuaca berubah ke kondisi normal atau kering`,
+            `-# ${emojis_1.EMOJI_STOP} Hentikan timer cuaca atau gunakan \`/${constants_1.SLASH_COMMAND.name} stop\``,
+        ].join("\n");
+    }
     return [
         `-# Controls:`,
         `-# ${emojis_1.EMOJI_SKIP} Skip to advance when weather changes to normal or dry conditions`,
@@ -73,8 +102,8 @@ function buildStatusDescription(config, timer) {
         buildCurrentWeatherSection(config, timer),
         buildNextWeatherSection(config, timer),
         WEATHER_TO_TIPS_GAP,
-        STATUS_TIPS,
-        buildControlsSection(),
+        getStatusTips(config.languageKey),
+        buildControlsSection(config),
     ].join("\n\n");
 }
 function createStatusMessage(config, timer) {

@@ -17,6 +17,7 @@ const help_1 = require("./help");
 const skip_1 = require("./skip");
 const start_1 = require("./start");
 const stop_1 = require("./stop");
+const language_1 = require("./language");
 const commandsMap = {
     [constants_1.SLASH_COMMAND.commands.help]: help_1.help,
     [constants_1.SLASH_COMMAND.commands.start]: start_1.start,
@@ -24,6 +25,7 @@ const commandsMap = {
     [constants_1.SLASH_COMMAND.commands.athletes.name]: athletes_1.athletes,
     [constants_1.SLASH_COMMAND.commands.skip.name]: skip_1.skip,
     [constants_1.SLASH_COMMAND.commands.reset.name]: reset_1.reset,
+    [constants_1.SLASH_COMMAND.commands.language]: language_1.language,
 };
 async function handleInteractionCreate({ args: [interaction], scope }) {
     if (interaction.isButton() && interaction.inGuild()) {

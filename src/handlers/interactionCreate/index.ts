@@ -13,6 +13,7 @@ import { help } from "./help";
 import { skip } from "./skip";
 import { start } from "./start";
 import { stop } from "./stop";
+import { language as setLanguage } from "./language";
 
 const commandsMap = {
     [SLASH_COMMAND.commands.help]: help,
@@ -21,6 +22,7 @@ const commandsMap = {
     [SLASH_COMMAND.commands.athletes.name]: athletes,
     [SLASH_COMMAND.commands.skip.name]: skip,
     [SLASH_COMMAND.commands.reset.name]: reset,
+    [SLASH_COMMAND.commands.language]: setLanguage,
 };
 
 export async function handleInteractionCreate({ args: [interaction], scope }: HandlerProps<[Interaction]>) {
