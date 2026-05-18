@@ -56,46 +56,8 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
     const scope = new Scope();
     scope.setTag("handler", "timer");
 
-    let connection: VoiceConnection | undefined;
     try {
         const config = await configRepo.get(timer.guildId);
-        connection = await getVoiceConnection(config);
-
-        if (connection === undefined) {
-            throw new Error("Could not get voice connection");
-        }
-
-        if (!connection.joinConfig.channelId) {
-            throw new Error("Could not get voice channel");
-        }
-
-        const voiceChannel = (await client.channels.fetch(connection.joinConfig.channelId!)) as VoiceChannel | undefined;
-        if (!voiceChannel) {
-            throw new Error("Could not get voice channel");
-        }
-
-        const guild = await client.guilds.fetch(timer.guildId);
-        if (!hasVoicePermissions(guild)) {
-            throw new Error("Missing voice permissions");
-        }
-
-        const isVoiceChannelEmpty = voiceChannel.members.filter((member) => member.id !== client.user!.id).size === 0;
-        if (isVoiceChannelEmpty) {
-            if (timer.voiceChannelEmptySince) {
-                if (timer.voiceChannelEmptySince <= now - EMPTY_VC_TIMEOUT) {
-                    logger.info(timer.guildId, "Stopping timer due to an empty voice channel");
-                    await stopTimer(timer.guildId, scope);
-                    connection.destroy();
-                    return;
-                }
-            } else {
-                logger.info(timer.guildId, "Empty voice channel");
-                await timerRepo.update(timer.guildId, (t) => ({ ...t, voiceChannelEmptySince: now }));
-            }
-        } else if (timer.voiceChannelEmptySince) {
-            await timerRepo.update(timer.guildId, (t) => ({ ...t, voiceChannelEmptySince: undefined }));
-        }
-
         const nextAthleteIndex = getNextAthleteIndex(config, timer);
         const nextAthleteName = config.athletes[nextAthleteIndex].name;
 
@@ -113,18 +75,53 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
             await updateStatusMessage(timer.guildId, scope);
         }
 
-        await speakCommand(
-            remainingSeconds.toString(),
-            { nextAthlete: nextAthleteName, started: timer.started },
-            connection,
-            config.languageKey
-        );
+        // Voice is optional — failure here must NOT kill the timer or the countdown
+        let connection: VoiceConnection | undefined;
+        try {
+            connection = await getVoiceConnection(config);
+
+            if (!connection || !connection.joinConfig.channelId) {
+                return;
+            }
+
+            const voiceChannel = (await client.channels.fetch(connection.joinConfig.channelId!)) as VoiceChannel | undefined;
+            if (!voiceChannel) {
+                return;
+            }
+
+            const guild = await client.guilds.fetch(timer.guildId);
+            if (!hasVoicePermissions(guild)) {
+                return;
+            }
+
+            const isVoiceChannelEmpty = voiceChannel.members.filter((member) => member.id !== client.user!.id).size === 0;
+            if (isVoiceChannelEmpty) {
+                if (timer.voiceChannelEmptySince) {
+                    if (timer.voiceChannelEmptySince <= now - EMPTY_VC_TIMEOUT) {
+                        logger.info(timer.guildId, "Stopping timer due to an empty voice channel");
+                        await stopTimer(timer.guildId, scope);
+                        connection.destroy();
+                        return;
+                    }
+                } else {
+                    logger.info(timer.guildId, "Empty voice channel");
+                    await timerRepo.update(timer.guildId, (t) => ({ ...t, voiceChannelEmptySince: now }));
+                }
+            } else if (timer.voiceChannelEmptySince) {
+                await timerRepo.update(timer.guildId, (t) => ({ ...t, voiceChannelEmptySince: undefined }));
+            }
+
+            await speakCommand(
+                remainingSeconds.toString(),
+                { nextAthlete: nextAthleteName, started: timer.started },
+                connection,
+                config.languageKey
+            );
+        } catch (voiceError) {
+            logger.warn(timer.guildId, `Voice error (timer continues): ${voiceError}`);
+        }
     } catch (e) {
         logger.error(timer.guildId, new Error(`Stopping timer due to an error\n${e}`), scope);
         await timerRepo.remove(timer.guildId);
-
-        try {
-            connection?.destroy();
-        } catch {}
     }
 }

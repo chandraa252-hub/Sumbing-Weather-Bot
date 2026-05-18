@@ -131,13 +131,21 @@ export async function updateStatusMessage(guildId: string, _scope?: Scope) {
             embeds: [createStatusMessage(config, timer)],
             components: [createTimerButtons()],
         });
-    } catch (e) {
-        logger.warn(guildId, "Could not update status message");
-
-        await timerRepo.update(timer.guildId, (t) => ({
-            ...t,
-            status: undefined,
-        }));
+    } catch (e: any) {
+        // Only clear the status reference if the message/channel was genuinely deleted.
+        // For transient errors (rate limits, network blips) keep the reference so we retry next tick.
+        const UNKNOWN_MESSAGE = 10008;
+        const UNKNOWN_CHANNEL = 10003;
+        const isGone = e?.code === UNKNOWN_MESSAGE || e?.code === UNKNOWN_CHANNEL;
+        if (isGone) {
+            logger.warn(guildId, "Status message was deleted, clearing reference");
+            await timerRepo.update(timer.guildId, (t) => ({
+                ...t,
+                status: undefined,
+            }));
+        } else {
+            logger.warn(guildId, `Could not update status message (will retry): ${e?.message ?? e}`);
+        }
     }
 }
 
