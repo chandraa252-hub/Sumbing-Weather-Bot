@@ -47,8 +47,7 @@ function buildCurrentWeatherSection(config, timer) {
     const currentWeather = config.athletes[timer.currentAthleteIndex];
     const weatherLine = (0, weatherDisplay_1.formatWeatherLine)(currentWeather);
     if (timer.started) {
-        const remainingSeconds = timer.nextChangeTime - (0, time_1.getTime)();
-        return [`# Current Weather`, `# ${weatherLine} (${(0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds)} remaining)`].join("\n");
+        return [`# Current Weather`, `# ${weatherLine} (changes <t:${timer.nextChangeTime}:R>)`].join("\n");
     }
     return [
         `# Current Weather`,

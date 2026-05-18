@@ -53,8 +53,7 @@ function buildCurrentWeatherSection(config: Config, timer: Timer): string {
     const weatherLine = formatWeatherLine(currentWeather);
 
     if (timer.started) {
-        const remainingSeconds = timer.nextChangeTime - getTime();
-        return [`# Current Weather`, `# ${weatherLine} (${formatRemainingDuration(remainingSeconds)} remaining)`].join("\n");
+        return [`# Current Weather`, `# ${weatherLine} (changes <t:${timer.nextChangeTime}:R>)`].join("\n");
     }
 
     return [
