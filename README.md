@@ -8,7 +8,7 @@ This project is a customized version of the original bot, adapted for specific u
 This project is based on the original TTT-Timer Discord Bot:
 https://github.com/andipaetzold/tttt-discord
 
-<img src="./docs/ttt-timer.png" height="350">
+<img src="./docs/ttt-timer-bot.png" height="350">
 
 ## Installation
 
