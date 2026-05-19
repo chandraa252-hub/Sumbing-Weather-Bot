@@ -14,7 +14,7 @@ const discord_1 = require("../../discord");
 const persistence_1 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 8;
+const SLASH_COMMAND_REGISTRATION_VERSION = 9;
 async function initCommands() {
     const commands = getSlashCommands();
     const commandHash = (0, object_hash_1.default)({ version: SLASH_COMMAND_REGISTRATION_VERSION, commands });
@@ -72,6 +72,16 @@ function getSlashCommands() {
             type: discord_js_1.ApplicationCommandType.ChatInput,
             name: S.help,
             description: "Show help",
+        },
+        {
+            type: discord_js_1.ApplicationCommandType.ChatInput,
+            name: S.status,
+            description: "Show current timer status",
+        },
+        {
+            type: discord_js_1.ApplicationCommandType.ChatInput,
+            name: S.leave,
+            description: "Force disconnect bot from voice channel",
         },
         {
             type: discord_js_1.ApplicationCommandType.ChatInput,

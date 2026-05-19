@@ -29,8 +29,10 @@ function getStatusTips(languageKey) {
         return [
             "⚠️ Bersiaplah menghadapi perubahan cuaca mendadak.",
             "Berhati-hati saat cuaca badai petir.",
+            BLANK_LINE,
             "☕ STMJ dianjurkan saat cuaca malam hari.",
             "Durasi efek STMJ: 5 menit.",
+            BLANK_LINE,
             "🪨 Di Watu Kotak, STMJ + Obor diperlukan",
             "saat Cuaca Buruk antara pukul 02:00 - 04:00.",
         ].join("\n");

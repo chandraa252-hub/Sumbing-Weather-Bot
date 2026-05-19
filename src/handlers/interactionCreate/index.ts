@@ -14,6 +14,8 @@ import { skip } from "./skip";
 import { start } from "./start";
 import { stop } from "./stop";
 import { language as setLanguage } from "./language";
+import { status } from "./status";
+import { leave } from "./leave";
 
 const commandsMap = {
     [SLASH_COMMAND.commands.help]: help,
@@ -23,6 +25,8 @@ const commandsMap = {
     [SLASH_COMMAND.commands.skip.name]: skip,
     [SLASH_COMMAND.commands.reset.name]: reset,
     [SLASH_COMMAND.commands.language]: setLanguage,
+    [SLASH_COMMAND.commands.status]: status,
+    [SLASH_COMMAND.commands.leave]: leave,
 };
 
 export async function handleInteractionCreate({ args: [interaction], scope }: HandlerProps<[Interaction]>) {
@@ -56,6 +60,10 @@ export async function handleInteractionCreate({ args: [interaction], scope }: Ha
                     logger.info(guildId, `Disconnecting from VC:${conn.joinConfig.channelId}`);
                     conn.disconnect();
                     conn.destroy();
+                }
+                const botVoice = interaction.guild?.members.me?.voice;
+                if (botVoice?.channelId) {
+                    try { await botVoice.disconnect(); } catch {}
                 }
                 break;
             }

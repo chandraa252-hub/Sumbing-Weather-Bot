@@ -18,6 +18,8 @@ const skip_1 = require("./skip");
 const start_1 = require("./start");
 const stop_1 = require("./stop");
 const language_1 = require("./language");
+const status_1 = require("./status");
+const leave_1 = require("./leave");
 const commandsMap = {
     [constants_1.SLASH_COMMAND.commands.help]: help_1.help,
     [constants_1.SLASH_COMMAND.commands.start]: start_1.start,
@@ -26,6 +28,8 @@ const commandsMap = {
     [constants_1.SLASH_COMMAND.commands.skip.name]: skip_1.skip,
     [constants_1.SLASH_COMMAND.commands.reset.name]: reset_1.reset,
     [constants_1.SLASH_COMMAND.commands.language]: language_1.language,
+    [constants_1.SLASH_COMMAND.commands.status]: status_1.status,
+    [constants_1.SLASH_COMMAND.commands.leave]: leave_1.leave,
 };
 async function handleInteractionCreate({ args: [interaction], scope }) {
     if (interaction.isButton() && interaction.inGuild()) {
@@ -52,6 +56,10 @@ async function handleInteractionCreate({ args: [interaction], scope }) {
                     logger_1.default.info(guildId, `Disconnecting from VC:${conn.joinConfig.channelId}`);
                     conn.disconnect();
                     conn.destroy();
+                }
+                const botVoice = interaction.guild?.members.me?.voice;
+                if (botVoice?.channelId) {
+                    try { await botVoice.disconnect(); } catch {}
                 }
                 break;
             }

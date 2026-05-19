@@ -10,7 +10,8 @@ const persistence_1 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 const timer_1 = require("../../services/timer");
 async function stop(interaction, scope) {
-    const guildId = interaction.guildId;
+    const guild = interaction.guild;
+    const guildId = guild.id;
     if (!(await persistence_1.timerRepo.exists(guildId))) {
         logger_1.default.info(guildId, "Timer is not running");
         await interaction.editReply("Timer is not running");
@@ -23,6 +24,13 @@ async function stop(interaction, scope) {
         logger_1.default.info(guildId, `Disconnecting from VC:${connection.joinConfig.channelId}`);
         connection.disconnect();
         connection.destroy();
+    }
+    const botVoice = guild.members.me?.voice;
+    if (botVoice?.channelId) {
+        try { await botVoice.disconnect(); }
+        catch (e) {
+            logger_1.default.warn(guildId, `Gateway voice disconnect failed: ${e}`);
+        }
     }
     await interaction.editReply("Timer stopped");
 }

@@ -15,6 +15,8 @@ exports.SLASH_COMMAND = {
         start: `start${_suffix}`,
         stop: `stop${_suffix}`,
         help: `help${_suffix}`,
+        status: `status${_suffix}`,
+        leave: `leave${_suffix}`,
         athletes: {
             name: `weathers${_suffix}`,
             athletesCount: 8,

@@ -19,6 +19,8 @@ export async function help(interaction: ChatInputCommandInteraction) {
                     `**/${S.help}** — Tampilkan pesan bantuan ini.`,
                     `**/${S.reset.name}** — Hentikan timer dan reset semua konfigurasi server.`,
                     `**/${S.skip.name}** — Lewati ke cuaca berikutnya dalam rotasi.`,
+                    `**/${S.status}** — Tampilkan status timer saat ini.`,
+                    `**/${S.leave}** — Paksa bot keluar dari voice channel.`,
                     `**/${S.language}** — Atur bahasa pengumuman timer.`,
                 ].join("\n")
                 : [
@@ -28,6 +30,8 @@ export async function help(interaction: ChatInputCommandInteraction) {
                     `**/${S.help}** — Show this help message.`,
                     `**/${S.reset.name}** — Stop the timer and reset all server configuration.`,
                     `**/${S.skip.name}** — Skip to the next weather in the rotation.`,
+                    `**/${S.status}** — Show current timer status.`,
+                    `**/${S.leave}** — Force disconnect bot from voice channel.`,
                     `**/${S.language}** — Set the announcement language.`,
                 ].join("\n")
         )
