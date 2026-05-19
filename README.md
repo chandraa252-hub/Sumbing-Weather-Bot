@@ -1,4 +1,4 @@
-# Sumbing Weather Discord Bot
+<img width="589" height="543" alt="Screenshot 2026-05-19 112242" src="https://github.com/user-attachments/assets/b3935265-e3c9-4fc9-bc4b-06be985947e8" /># Sumbing Weather Discord Bot
 
 This Discord bot was built to provide weather information and voice-based instructions inside a Discord voice channel. It helps users by giving automated announcements and real-time updates.
 
@@ -8,6 +8,8 @@ This project is a customized version of the original bot, adapted for specific u
 This project is based on the original TTT-Timer Discord Bot:
 https://github.com/andipaetzold/tttt-discord
 
+<img src="./docs/ttt-timer.png" height="350">
+
 ## Installation
 
 Click here to invite the bot to your server:
@@ -15,6 +17,10 @@ Click here to invite the bot to your server:
 https://discord.com/oauth2/authorize?client_id=1505002488409882684
 
 You will be asked to grant multiple permissions:
+
+<img src="./docs/authorize1.png" height="350">
+
+<img src="./docs/authorize2.png" height="350">
 
 | Permission      | Description                                                                 |
 | --------------- | --------------------------------------------------------------------------- |
@@ -48,6 +54,9 @@ Otherwise, sets the list of weather types and their rotation durations. Time val
 
 Example:
 
+<img src="./docs/weather1.png" height="100">
+<img src="./docs/weather2.png" height="100">
+
 ```bash
 /weathers weather1:extreme weather time1:210 weather2:normal weather time2:480
 ```
@@ -57,6 +66,10 @@ The rotation now includes multiple weather types with custom durations.
 ---
 
 #### `/help`
+
+<img src="./docs/english-help.png" height="350">
+
+<img src="./docs/indonesian-help.png" height="350">
 
 Shows a list of available commands, project links, and developer information.
 
@@ -106,6 +119,8 @@ If the timer hasn't started yet, this command will immediately start the process
 
 #### `/start`
 
+<img src="./docs/english-status.png" height="350">
+
 Starts the weather timer. The bot joins your current voice channel or uses the previous one.
 
 ---
@@ -154,6 +169,9 @@ Example:
 ```
 
 Example /start message in Indonesian:
+
+<img src="./docs/indonesian-status.png" height="350">
+
 ```bash
 Cuaca Saat Ini
 🌩️ Cuaca Buruk
@@ -182,9 +200,11 @@ Kontrol:
 
 ## Status Message
 
-When starting the timer using `/timer start`, a message is sent to the current channel. This message automatically updates and shows the current weather, the next weather, and additional information or warnings.
+When starting the timer using `/start`, a message is sent to the current channel. This message automatically updates and shows the current weather, the next weather, and additional information or warnings.
 
 Example:
+
+<img src="./docs/english-help.png" height="350">
 
 ```text
 Current Weather
