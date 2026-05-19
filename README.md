@@ -154,6 +154,7 @@ Example:
 ```
 
 Example /start message in Indonesian:
+```bash
 Cuaca Saat Ini
 🌩️ Cuaca Buruk
 (3m 23s lagi)
@@ -174,6 +175,7 @@ saat Cuaca Buruk antara pukul 02:00 - 04:00.
 Kontrol:
 ⏭️ Ganti saat cuaca berubah ke kondisi cerah atau kemarau
 ⏹️ Hentikan timer cuaca atau gunakan /stop
+```
 
 ---
 
