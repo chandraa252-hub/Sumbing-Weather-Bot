@@ -1,4 +1,4 @@
-<img width="589" height="543" alt="Screenshot 2026-05-19 112242" src="https://github.com/user-attachments/assets/b3935265-e3c9-4fc9-bc4b-06be985947e8" /># Sumbing Weather Discord Bot
+/># Sumbing Weather Discord Bot
 
 This Discord bot was built to provide weather information and voice-based instructions inside a Discord voice channel. It helps users by giving automated announcements and real-time updates.
 
