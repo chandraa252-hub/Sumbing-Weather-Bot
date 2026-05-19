@@ -1,4 +1,4 @@
-/># Sumbing Weather Discord Bot
+># Sumbing Weather Discord Bot
 
 This Discord bot was built to provide weather information and voice-based instructions inside a Discord voice channel. It helps users by giving automated announcements and real-time updates.
 
