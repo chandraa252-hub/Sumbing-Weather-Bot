@@ -40,35 +40,38 @@ You will be asked to grant multiple permissions:
 
 ### Commands
 
-#### `/timer weathers [<weather1>] [<time1>] [<weather2>] [<time2>] ...`
+#### `/weathers [<weather1>] [<time1>] [<weather2>] [<time2>] ...`
 
 If all options are omitted, returns the configured weather list.
 
-Otherwise, sets the list of weather types and their rotation durations. Time values are optional and default to 30 seconds.
+Otherwise, sets the list of weather types and their rotation durations. Time values are optional and default to 210s for extreme weather and 480s for normal weather.
 
 Example:
 
 ```bash
-/timer weathers weather1:extreme weather time1:210 weather2:normal weather time2:480
+/weathers weather1:extreme weather time1:210 weather2:normal weather time2:480
 ```
 
 The rotation now includes multiple weather types with custom durations.
 
 ---
 
-#### `/timer help`
+#### `/help`
 
 Shows a list of available commands, project links, and developer information.
 
 Example output:
 
 ```bash
-/timer start — Start the weather timer. Join a voice channel first.
-/timer stop — Stop the timer and disconnect from voice.
-/timer weathers — View or set weather names and rotation durations.
-/timer help — Show this help message.
-/timer reset — Stop the timer and reset all server configuration.
-/timer skip — Skip to the next weather in the rotation.
+/start — Start the weather timer. Join a voice channel first.
+/stop — Stop the timer and disconnect from voice.
+/weathers — View or set weather names and rotation durations.
+/help — Show this help message.
+/reset — Stop the timer and reset all server configuration.
+/skip — Skip to the next weather in the rotation.
+/status — Show current timer status.
+/leave — Force disconnect bot from voice channel.
+/language — Set the announcement language.
 
 Discord Server (Questions/Feedback)
 https://discord.gg/jB3J3xfmGf
@@ -87,13 +90,13 @@ Made by Stephanus Chandra Wijaya
 
 ---
 
-#### `/timer reset`
+#### `/reset`
 
 Stops the timer and resets all configuration of the bot for your server.
 
 ---
 
-#### `/timer skip`
+#### `/skip`
 
 Skips the current weather in the rotation and moves to the next one.
 
@@ -101,16 +104,78 @@ If the timer hasn't started yet, this command will immediately start the process
 
 ---
 
-#### `/timer start`
+#### `/start`
 
 Starts the weather timer. The bot joins your current voice channel or uses the previous one.
 
 ---
 
-#### `/timer stop`
+#### `/stop`
 
 Stops the timer and leaves the voice channel.
 
+---
+
+#### `/leave`
+
+Force disconnects the bot from the current voice channel.
+
+This command is useful if `/stop` stops the timer but the bot remains connected to the voice channel due to a Discord voice connection issue.
+
+---
+
+#### `/status`
+
+Displays the current timer status.
+
+---
+
+#### `/language [<language>]`
+
+Shows or changes the current announcement language.
+
+Available languages:
+- `en-gb` — English (British)
+- `en-us` — English (US)
+- `id` — Indonesian
+
+Changing the language automatically updates:
+- Voice announcements (TTS)
+- Spoken accent and pronunciation
+- Help messages
+- Status messages
+- Weather names and labels
+
+For example, selecting `id` changes all announcements into Indonesian and uses Indonesian voice pronunciation for TTS audio playback.
+
+Example:
+```bash
+/language id
+```
+
+Example /start message in Indonesian:
+Cuaca Saat Ini
+🌩️ Cuaca Buruk
+(3m 23s lagi)
+
+Cuaca Selanjutnya
+🌤️ Cuaca Cerah
+⠀
+
+⚠️ Bersiaplah menghadapi perubahan cuaca mendadak.
+Berhati-hati saat cuaca badai petir.
+⠀
+☕ STMJ dianjurkan saat cuaca malam hari.
+Durasi efek STMJ: 5 menit.
+⠀
+🪨 Di Watu Kotak, STMJ + Obor diperlukan
+saat Cuaca Buruk antara pukul 02:00 - 04:00.
+
+Kontrol:
+⏭️ Ganti saat cuaca berubah ke kondisi cerah atau kemarau
+⏹️ Hentikan timer cuaca atau gunakan /stop
+
+---
 
 
 ## Status Message
