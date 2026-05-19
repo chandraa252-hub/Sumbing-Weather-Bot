@@ -204,8 +204,6 @@ When starting the timer using `/start`, a message is sent to the current channel
 
 Example:
 
-<img src="./docs/english-help.png" height="350">
-
 ```text
 Current Weather
 🌤️ Normal Weather (7m 14s remaining)
