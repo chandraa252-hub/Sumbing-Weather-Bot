@@ -295,6 +295,20 @@ services:
 
 ---
 
+## Recent Beta Development Updates
+
+- Added new commands and fixed voice channel disconnection issues
+- Updated commands and language options for better user experience
+- Added Indonesian language support for bot announcements and commands
+- Fixed error when starting the bot via PM2 on Windows
+- Updated timer commands and bot configuration settings
+- Updated countdown timer to refresh every five seconds
+- Saved timer progress at the end of the loop
+- Added project overview and setup instructions to README
+
+---
+
+
 ## Need help?
 
 Join the Discord server for questions, feedback, or support:
