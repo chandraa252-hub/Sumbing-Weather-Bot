@@ -68,7 +68,7 @@ export async function handleInteractionCreate({ args: [interaction], scope }: Ha
     }
     const guildId = interaction.guildId;
 
-    const commandName = interaction.options.getSubcommand();
+    const commandName = interaction.commandName;
     logger.info(guildId, `Slash Command: ${commandName}`);
 
     await interaction.deferReply();

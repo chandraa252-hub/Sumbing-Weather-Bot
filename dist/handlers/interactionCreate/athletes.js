@@ -25,7 +25,7 @@ async function athletes(interaction) {
         return;
     }
     if (options.athletes.every((a) => a === null) && options.times.every((t) => t !== null)) {
-        await interaction.editReply(`You must provide weather names together with their times, e.g. \`/${constants_1.SLASH_COMMAND.name} weathers extreme weather:210 normal weather:480\`.`);
+        await interaction.editReply(`You must provide weather names together with their times, e.g. \`/${constants_1.SLASH_COMMAND.commands.athletes.name} extreme weather:210 normal weather:480\`.`);
         return;
     }
     const athletes = await Promise.all(options.athletes

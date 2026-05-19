@@ -29,35 +29,33 @@ function getStatusTips(languageKey: string): string {
         return [
             "⚠️ Bersiaplah menghadapi perubahan cuaca mendadak.",
             "Berhati-hati saat cuaca badai petir.",
-            "",
             "☕ STMJ dianjurkan saat cuaca malam hari.",
             "Durasi efek STMJ: 5 menit.",
-            "",
             "🪨 Di Watu Kotak, STMJ + Obor diperlukan",
-            "saat Cuaca Ekstrem antara pukul 02:00 - 04:00.",
+            "saat Cuaca Buruk antara pukul 02:00 - 04:00.",
         ].join("\n");
     }
     return [
         "⚠️ Stay prepared for sudden weather changes.",
         "Be careful during thunderstorm weather.",
-        "",
         "☕ STMJ is recommended during nighttime weather.",
         "STMJ effect duration: 5 minutes.",
-        "",
         "🪨 In Watu Kotak, STMJ + Torch is required",
         "during Extreme Weather between 02:00 - 04:00.",
     ].join("\n");
 }
 
-function createTimerButtons(): ActionRowBuilder<ButtonBuilder> {
+function createTimerButtons(languageKey: string): ActionRowBuilder<ButtonBuilder> {
+    const skipLabel = languageKey === "id" ? `${EMOJI_SKIP} Ganti cuaca` : `${EMOJI_SKIP} Next weather`;
+    const stopLabel = languageKey === "id" ? `${EMOJI_STOP} Berhenti` : `${EMOJI_STOP} Stop timer`;
     return new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
             .setCustomId(BUTTON_SKIP)
-            .setLabel(`${EMOJI_SKIP} Next weather`)
+            .setLabel(skipLabel)
             .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
             .setCustomId(BUTTON_STOP)
-            .setLabel(`${EMOJI_STOP} Stop timer`)
+            .setLabel(stopLabel)
             .setStyle(ButtonStyle.Danger),
     );
 }
@@ -70,7 +68,7 @@ function buildCurrentWeatherSection(config: Config, timer: Timer): string {
     if (timer.started) {
         const remainingSeconds = timer.nextChangeTime - getTime();
         const remainingLabel = config.languageKey === "id"
-            ? `(${formatRemainingDuration(remainingSeconds)} tersisa)`
+            ? `(${formatRemainingDuration(remainingSeconds)} lagi)`
             : `(${formatRemainingDuration(remainingSeconds)} remaining)`;
         return [header, `# ${weatherLine}`, `# ${remainingLabel}`].join("\n");
     }
@@ -96,14 +94,14 @@ function buildControlsSection(config: Config): string {
     if (config.languageKey === "id") {
         return [
             `-# Kontrol:`,
-            `-# ${EMOJI_SKIP} Lewati untuk maju saat cuaca berubah ke kondisi normal atau kering`,
-            `-# ${EMOJI_STOP} Hentikan timer cuaca atau gunakan \`/${SLASH_COMMAND.name} stop\``,
+            `-# ${EMOJI_SKIP} Ganti saat cuaca berubah ke kondisi cerah atau kemarau`,
+            `-# ${EMOJI_STOP} Hentikan timer cuaca atau gunakan \`/${SLASH_COMMAND.commands.stop}\``,
         ].join("\n");
     }
     return [
         `-# Controls:`,
         `-# ${EMOJI_SKIP} Skip to advance when weather changes to normal or dry conditions`,
-        `-# ${EMOJI_STOP} Stop the weather timer or use \`/${SLASH_COMMAND.name} stop\``,
+        `-# ${EMOJI_STOP} Stop the weather timer or use \`/${SLASH_COMMAND.commands.stop}\``,
     ].join("\n");
 }
 
@@ -132,7 +130,7 @@ export async function sendStatusMessage(channel: TextChannel, _scope: Scope) {
     try {
         message = await channel.send({
             embeds: [createStatusMessage(config, timer)],
-            components: [createTimerButtons()],
+            components: [createTimerButtons(config.languageKey)],
         });
 
         await timerRepo.update(guildId, (t) => ({
@@ -158,7 +156,7 @@ export async function updateStatusMessage(guildId: string, _scope?: Scope) {
         const message = await channel.messages.fetch(timer.status.messageId);
         await message.edit({
             embeds: [createStatusMessage(config, timer)],
-            components: [createTimerButtons()],
+            components: [createTimerButtons(config.languageKey)],
         });
     } catch (e: any) {
         // Only clear the status reference if the message/channel was genuinely deleted.

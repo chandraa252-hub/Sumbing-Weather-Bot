@@ -8,26 +8,21 @@ exports.DEFAULT_WEATHERS = [
 ];
 exports.DEFAULT_START_DELAY = 0;
 exports.DEFAULT_TIME_PER_ATHLETE = 30;
-exports.EMPTY_VC_TIMEOUT = 60 * 60; // 60 minutes
-// Slash Commands
+exports.EMPTY_VC_TIMEOUT = 60 * 60;
+const _suffix = environment_1.environment.mainBot ? "" : environment_1.environment.botId;
 exports.SLASH_COMMAND = {
-    name: `timer${environment_1.environment.mainBot ? "" : environment_1.environment.botId}`,
     commands: {
-        start: "start",
-        stop: "stop",
-        help: "help",
+        start: `start${_suffix}`,
+        stop: `stop${_suffix}`,
+        help: `help${_suffix}`,
         athletes: {
-            name: "weathers",
+            name: `weathers${_suffix}`,
             athletesCount: 8,
             athletesPrefix: "weather",
             timePrefix: "time",
         },
-        skip: {
-            name: "skip",
-        },
-        reset: {
-            name: "reset",
-        },
-        language: "language",
+        skip: { name: `skip${_suffix}` },
+        reset: { name: `reset${_suffix}` },
+        language: `language${_suffix}`,
     },
 };

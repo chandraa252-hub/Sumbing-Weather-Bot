@@ -29,32 +29,30 @@ function getStatusTips(languageKey) {
         return [
             "⚠️ Bersiaplah menghadapi perubahan cuaca mendadak.",
             "Berhati-hati saat cuaca badai petir.",
-            "",
             "☕ STMJ dianjurkan saat cuaca malam hari.",
             "Durasi efek STMJ: 5 menit.",
-            "",
             "🪨 Di Watu Kotak, STMJ + Obor diperlukan",
-            "saat Cuaca Ekstrem antara pukul 02:00 - 04:00.",
+            "saat Cuaca Buruk antara pukul 02:00 - 04:00.",
         ].join("\n");
     }
     return [
         "⚠️ Stay prepared for sudden weather changes.",
         "Be careful during thunderstorm weather.",
-        "",
         "☕ STMJ is recommended during nighttime weather.",
         "STMJ effect duration: 5 minutes.",
-        "",
         "🪨 In Watu Kotak, STMJ + Torch is required",
         "during Extreme Weather between 02:00 - 04:00.",
     ].join("\n");
 }
-function createTimerButtons() {
+function createTimerButtons(languageKey) {
+    const skipLabel = languageKey === "id" ? `${emojis_1.EMOJI_SKIP} Ganti cuaca` : `${emojis_1.EMOJI_SKIP} Next weather`;
+    const stopLabel = languageKey === "id" ? `${emojis_1.EMOJI_STOP} Berhenti` : `${emojis_1.EMOJI_STOP} Stop timer`;
     return new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
         .setCustomId(exports.BUTTON_SKIP)
-        .setLabel(`${emojis_1.EMOJI_SKIP} Next weather`)
+        .setLabel(skipLabel)
         .setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder()
         .setCustomId(exports.BUTTON_STOP)
-        .setLabel(`${emojis_1.EMOJI_STOP} Stop timer`)
+        .setLabel(stopLabel)
         .setStyle(discord_js_1.ButtonStyle.Danger));
 }
 function buildCurrentWeatherSection(config, timer) {
@@ -64,7 +62,7 @@ function buildCurrentWeatherSection(config, timer) {
     if (timer.started) {
         const remainingSeconds = timer.nextChangeTime - (0, time_1.getTime)();
         const remainingLabel = config.languageKey === "id"
-            ? `(${(0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds)} tersisa)`
+            ? `(${(0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds)} lagi)`
             : `(${(0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds)} remaining)`;
         return [header, `# ${weatherLine}`, `# ${remainingLabel}`].join("\n");
     }
@@ -87,14 +85,14 @@ function buildControlsSection(config) {
     if (config.languageKey === "id") {
         return [
             `-# Kontrol:`,
-            `-# ${emojis_1.EMOJI_SKIP} Lewati untuk maju saat cuaca berubah ke kondisi normal atau kering`,
-            `-# ${emojis_1.EMOJI_STOP} Hentikan timer cuaca atau gunakan \`/${constants_1.SLASH_COMMAND.name} stop\``,
+            `-# ${emojis_1.EMOJI_SKIP} Ganti saat cuaca berubah ke kondisi cerah atau kemarau`,
+            `-# ${emojis_1.EMOJI_STOP} Hentikan timer cuaca atau gunakan \`/${constants_1.SLASH_COMMAND.commands.stop}\``,
         ].join("\n");
     }
     return [
         `-# Controls:`,
         `-# ${emojis_1.EMOJI_SKIP} Skip to advance when weather changes to normal or dry conditions`,
-        `-# ${emojis_1.EMOJI_STOP} Stop the weather timer or use \`/${constants_1.SLASH_COMMAND.name} stop\``,
+        `-# ${emojis_1.EMOJI_STOP} Stop the weather timer or use \`/${constants_1.SLASH_COMMAND.commands.stop}\``,
     ].join("\n");
 }
 function buildStatusDescription(config, timer) {
@@ -119,7 +117,7 @@ async function sendStatusMessage(channel, _scope) {
     try {
         message = await channel.send({
             embeds: [createStatusMessage(config, timer)],
-            components: [createTimerButtons()],
+            components: [createTimerButtons(config.languageKey)],
         });
         await persistence_2.timerRepo.update(guildId, (t) => ({
             ...t,
@@ -143,7 +141,7 @@ async function updateStatusMessage(guildId, _scope) {
         const message = await channel.messages.fetch(timer.status.messageId);
         await message.edit({
             embeds: [createStatusMessage(config, timer)],
-            components: [createTimerButtons()],
+            components: [createTimerButtons(config.languageKey)],
         });
     }
     catch (e) {

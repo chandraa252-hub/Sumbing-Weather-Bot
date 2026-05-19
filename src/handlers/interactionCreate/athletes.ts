@@ -31,7 +31,7 @@ export async function athletes(interaction: ChatInputCommandInteraction) {
 
     if (options.athletes.every((a) => a === null) && options.times.every((t) => t !== null)) {
         await interaction.editReply(
-            `You must provide weather names together with their times, e.g. \`/${SLASH_COMMAND.name} weathers extreme weather:210 normal weather:480\`.`
+            `You must provide weather names together with their times, e.g. \`/${SLASH_COMMAND.commands.athletes.name} extreme weather:210 normal weather:480\`.`
         );
         return;
     }

@@ -6,7 +6,7 @@ exports.formatWeatherLine = formatWeatherLine;
 exports.formatRemainingDuration = formatRemainingDuration;
 function getWeatherEmoji(weatherName) {
     const name = weatherName.toLowerCase();
-    if (name.includes("extreme") || name.includes("thunder")) {
+    if (name.includes("extreme") || name.includes("thunder") || name.includes("buruk") || name.includes("ekstrem")) {
         return "🌩️";
     }
     if (name.includes("night")) {

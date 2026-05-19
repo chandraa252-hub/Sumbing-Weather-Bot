@@ -16,8 +16,8 @@ const voiceCommands = {
     skip: ({ nextAthlete }) => `Change to ${(0, weatherDisplay_1.formatWeatherName)(String(nextAthlete))}.`,
 };
 exports.language = {
-    key: "en",
-    name: "English",
-    locale: "en-GB",
+    key: "en-us",
+    name: "English (US)",
+    locale: "en-US",
     voiceCommands,
 };

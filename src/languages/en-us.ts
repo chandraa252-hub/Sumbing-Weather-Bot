@@ -17,8 +17,8 @@ const voiceCommands: VoiceCommands = {
 };
 
 export const language: Language = {
-    key: "en",
-    name: "English",
-    locale: "en-GB",
+    key: "en-us",
+    name: "English (US)",
+    locale: "en-US",
     voiceCommands,
 };

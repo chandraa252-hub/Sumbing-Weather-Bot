@@ -40,7 +40,7 @@ async function start(interaction, scope) {
     }
     const member = await resolveGuildMember(guild, interaction);
     if (!member?.voice.channel) {
-        await interaction.editReply(`I don't know which voice channel to join. Join a voice channel and run \`/${constants_1.SLASH_COMMAND.name} start\` again.`);
+        await interaction.editReply(`I don't know which voice channel to join. Join a voice channel and run \`/${constants_1.SLASH_COMMAND.commands.start}\` again.`);
         return;
     }
     const channel = interaction.channel;

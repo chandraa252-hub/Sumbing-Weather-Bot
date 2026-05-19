@@ -62,7 +62,7 @@ async function handleInteractionCreate({ args: [interaction], scope }) {
         return;
     }
     const guildId = interaction.guildId;
-    const commandName = interaction.options.getSubcommand();
+    const commandName = interaction.commandName;
     logger_1.default.info(guildId, `Slash Command: ${commandName}`);
     await interaction.deferReply();
     const command = commandsMap[commandName];
