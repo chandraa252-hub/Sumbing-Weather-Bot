@@ -214,8 +214,8 @@ The bot automatically reacts with control emojis to this message. These can be u
 
 | Emoji | Equivalent Slash Command | Note                                      |
 | ----- | ------------------------ | ----------------------------------------- |
-| ⏭️    | `/timer skip`           | Skip to the next weather in the rotation  |
-| ⏹️    | `/timer stop`           | Stop the timer and disconnect the bot     |
+| ⏭️    | `/skip`           | Skip to the next weather in the rotation  |
+| ⏹️    | `/stop`           | Stop the timer and disconnect the bot     |
 
 
 ## Voice Commands
