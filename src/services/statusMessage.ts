@@ -1,6 +1,6 @@
 import { type Scope } from "@sentry/node";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Message, TextChannel } from "discord.js";
-import { SLASH_COMMAND } from "../constants";
+import { SLASH_COMMAND, BUTTON_SOUNDBOARD_OPEN } from "../constants";
 import { client } from "../discord";
 import { configRepo } from "../persistence";
 import { timerRepo } from "../persistence";
@@ -59,6 +59,10 @@ function createTimerButtons(languageKey: string): ActionRowBuilder<ButtonBuilder
             .setCustomId(BUTTON_STOP)
             .setLabel(stopLabel)
             .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+            .setCustomId(BUTTON_SOUNDBOARD_OPEN)
+            .setLabel("🎵 Soundboard")
+            .setStyle(ButtonStyle.Secondary),
     );
 }
 

@@ -32,5 +32,9 @@ export const SLASH_COMMAND = {
             name: `reset${suffix}`,
         },
         language: `language${suffix}`,
+        soundboard: `soundboard${suffix}`,
     },
 };
+export const BUTTON_SOUNDBOARD_OPEN = "soundboard_open";
+export const BUTTON_SOUND_PREFIX = "sound_";
+export const BUTTON_SOUNDBOARD_CLOSE = "soundboard_close";

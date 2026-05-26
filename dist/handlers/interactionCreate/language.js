@@ -19,8 +19,10 @@ async function language(interaction) {
     const config = await persistence_1.configRepo.get(guildId);
     const [name1, name2] = WEATHER_NAMES_BY_LANGUAGE[selectedKey];
     const updatedAthletes = config.athletes.map((athlete, i) => {
-        if (i === 0) return { ...athlete, name: name1 };
-        if (i === 1) return { ...athlete, name: name2 };
+        if (i === 0)
+            return { ...athlete, name: name1 };
+        if (i === 1)
+            return { ...athlete, name: name2 };
         return athlete;
     });
     await persistence_1.configRepo.set({ ...config, languageKey: selectedKey, athletes: updatedAthletes });

@@ -55,7 +55,10 @@ function createTimerButtons(languageKey) {
         .setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder()
         .setCustomId(exports.BUTTON_STOP)
         .setLabel(stopLabel)
-        .setStyle(discord_js_1.ButtonStyle.Danger));
+        .setStyle(discord_js_1.ButtonStyle.Danger), new discord_js_1.ButtonBuilder()
+        .setCustomId(constants_1.BUTTON_SOUNDBOARD_OPEN)
+        .setLabel("🎵 Soundboard")
+        .setStyle(discord_js_1.ButtonStyle.Secondary));
 }
 function buildCurrentWeatherSection(config, timer) {
     const currentWeather = config.athletes[timer.currentAthleteIndex];

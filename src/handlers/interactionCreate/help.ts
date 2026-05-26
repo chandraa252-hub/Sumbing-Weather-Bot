@@ -22,6 +22,7 @@ export async function help(interaction: ChatInputCommandInteraction) {
                     `**/${S.status}** — Tampilkan status timer saat ini.`,
                     `**/${S.leave}** — Paksa bot keluar dari voice channel.`,
                     `**/${S.language}** — Atur bahasa pengumuman timer.`,
+                    `**/${S.soundboard}** — Buka panel soundboard untuk memutar audio.`,
                 ].join("\n")
                 : [
                     `**/${S.start}** — Start the weather timer. Join a voice channel first.`,
@@ -33,6 +34,7 @@ export async function help(interaction: ChatInputCommandInteraction) {
                     `**/${S.status}** — Show current timer status.`,
                     `**/${S.leave}** — Force disconnect bot from voice channel.`,
                     `**/${S.language}** — Set the announcement language.`,
+                    `**/${S.soundboard}** — Open the soundboard panel to play audio.`,
                 ].join("\n")
         )
         .addFields(

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SLASH_COMMAND = exports.EMPTY_VC_TIMEOUT = exports.DEFAULT_TIME_PER_ATHLETE = exports.DEFAULT_START_DELAY = exports.DEFAULT_WEATHERS = void 0;
+exports.BUTTON_SOUNDBOARD_CLOSE = exports.BUTTON_SOUND_PREFIX = exports.BUTTON_SOUNDBOARD_OPEN = exports.SLASH_COMMAND = exports.EMPTY_VC_TIMEOUT = exports.DEFAULT_TIME_PER_ATHLETE = exports.DEFAULT_START_DELAY = exports.DEFAULT_WEATHERS = void 0;
 const environment_1 = require("./environment");
 exports.DEFAULT_WEATHERS = [
     { name: "extreme weather", time: 210 },
@@ -9,22 +9,30 @@ exports.DEFAULT_WEATHERS = [
 exports.DEFAULT_START_DELAY = 0;
 exports.DEFAULT_TIME_PER_ATHLETE = 30;
 exports.EMPTY_VC_TIMEOUT = 60 * 60;
-const _suffix = environment_1.environment.mainBot ? "" : environment_1.environment.botId;
+const suffix = environment_1.environment.mainBot ? "" : environment_1.environment.botId;
 exports.SLASH_COMMAND = {
     commands: {
-        start: `start${_suffix}`,
-        stop: `stop${_suffix}`,
-        help: `help${_suffix}`,
-        status: `status${_suffix}`,
-        leave: `leave${_suffix}`,
+        start: `start${suffix}`,
+        stop: `stop${suffix}`,
+        help: `help${suffix}`,
+        status: `status${suffix}`,
+        leave: `leave${suffix}`,
         athletes: {
-            name: `weathers${_suffix}`,
+            name: `weathers${suffix}`,
             athletesCount: 8,
             athletesPrefix: "weather",
             timePrefix: "time",
         },
-        skip: { name: `skip${_suffix}` },
-        reset: { name: `reset${_suffix}` },
-        language: `language${_suffix}`,
+        skip: {
+            name: `skip${suffix}`,
+        },
+        reset: {
+            name: `reset${suffix}`,
+        },
+        language: `language${suffix}`,
+        soundboard: `soundboard${suffix}`,
     },
 };
+exports.BUTTON_SOUNDBOARD_OPEN = "soundboard_open";
+exports.BUTTON_SOUND_PREFIX = "sound_";
+exports.BUTTON_SOUNDBOARD_CLOSE = "soundboard_close";

@@ -37,3 +37,7 @@ run = ["npm", "start"]
 
 [userenv.shared]
 REDIS_URL = "redis://localhost:6379"
+
+[[ports]]
+localPort = 6379
+externalPort = 80

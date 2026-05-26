@@ -14,7 +14,7 @@ const discord_1 = require("../../discord");
 const persistence_1 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 9;
+const SLASH_COMMAND_REGISTRATION_VERSION = 10;
 async function initCommands() {
     const commands = getSlashCommands();
     const commandHash = (0, object_hash_1.default)({ version: SLASH_COMMAND_REGISTRATION_VERSION, commands });
@@ -28,6 +28,7 @@ async function initCommands() {
     await syncAllGuildCommands();
     await persistence_1.slashCommandHashRepo.set(commandHash);
 }
+/** Guild-scoped commands appear instantly on new servers (global commands can take up to an hour). */
 async function registerGuildCommands(guildId) {
     const commands = getSlashCommands();
     await discord_1.client.application.commands.set(commands, guildId);
@@ -100,6 +101,11 @@ function getSlashCommands() {
                     ],
                 },
             ],
+        },
+        {
+            type: discord_js_1.ApplicationCommandType.ChatInput,
+            name: S.soundboard,
+            description: "Open the soundboard panel",
         },
         {
             type: discord_js_1.ApplicationCommandType.ChatInput,

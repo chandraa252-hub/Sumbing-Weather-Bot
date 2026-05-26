@@ -1,12 +1,15 @@
-import { Interaction } from "discord.js";
-import { SLASH_COMMAND } from "../../constants";
+import { GuildMember, Interaction, VoiceChannel } from "discord.js";
+import { getVoiceConnection } from "@discordjs/voice";
+import { SLASH_COMMAND, BUTTON_SOUNDBOARD_OPEN, BUTTON_SOUND_PREFIX, BUTTON_SOUNDBOARD_CLOSE } from "../../constants";
+import { environment } from "../../environment";
+import { configRepo, timerRepo } from "../../persistence";
 import logger from "../../services/logger";
 import { HandlerProps } from "../../services/sentry";
-import { getVoiceConnection } from "@discordjs/voice";
-import { environment } from "../../environment";
 import { BUTTON_SKIP, BUTTON_STOP, updateStatusMessage } from "../../services/statusMessage";
 import { skipCurrentAthlete, stopTimer } from "../../services/timer";
-import { timerRepo } from "../../persistence";
+import { connectToChannel } from "../../util/connectToChannel";
+import { playSound } from "../../services/soundboard";
+import { createSoundboardPanel } from "./soundboard";
 import { reset } from "./reset";
 import { athletes } from "./athletes";
 import { help } from "./help";
@@ -16,6 +19,7 @@ import { stop } from "./stop";
 import { language as setLanguage } from "./language";
 import { status } from "./status";
 import { leave } from "./leave";
+import { soundboard } from "./soundboard";
 
 const commandsMap = {
     [SLASH_COMMAND.commands.help]: help,
@@ -27,16 +31,61 @@ const commandsMap = {
     [SLASH_COMMAND.commands.language]: setLanguage,
     [SLASH_COMMAND.commands.status]: status,
     [SLASH_COMMAND.commands.leave]: leave,
+    [SLASH_COMMAND.commands.soundboard]: soundboard,
 };
 
 export async function handleInteractionCreate({ args: [interaction], scope }: HandlerProps<[Interaction]>) {
     if (interaction.isButton() && interaction.inGuild()) {
-        await interaction.deferUpdate();
         const guildId = interaction.guildId;
-        const userId = interaction.user.id;
+        const customId = interaction.customId;
 
-        logger.info(guildId, `Button: ${interaction.customId} by ${userId}`);
+        logger.info(guildId, `Button: ${customId} by ${interaction.user.id}`);
 
+        if (customId === BUTTON_SOUNDBOARD_OPEN) {
+            await interaction.deferUpdate();
+            const config = await configRepo.get(guildId);
+            await interaction.followUp({ ...createSoundboardPanel(config.languageKey), ephemeral: true });
+            return;
+        }
+
+        if (customId === BUTTON_SOUNDBOARD_CLOSE) {
+            await interaction.deferUpdate();
+            await interaction.deleteReply().catch(() => {});
+            return;
+        }
+
+        if (customId.startsWith(BUTTON_SOUND_PREFIX)) {
+            await interaction.deferUpdate();
+            const soundName = customId.slice(BUTTON_SOUND_PREFIX.length);
+            const member = interaction.member as GuildMember | null;
+            const voiceChannelId = member?.voice?.channelId;
+
+            if (!voiceChannelId) {
+                await interaction.followUp({ content: "❌ Kamu harus berada di voice channel terlebih dahulu.", ephemeral: true });
+                return;
+            }
+
+            let conn = getVoiceConnection(guildId, environment.botId);
+            if (!conn) {
+                const channel = interaction.guild?.channels.cache.get(voiceChannelId) as VoiceChannel | undefined;
+                if (channel) {
+                    conn = await connectToChannel(channel) ?? undefined;
+                }
+            }
+
+            if (!conn) {
+                await interaction.followUp({ content: "❌ Tidak bisa bergabung ke voice channel.", ephemeral: true });
+                return;
+            }
+
+            const played = await playSound(soundName, conn);
+            if (!played) {
+                await interaction.followUp({ content: `❌ Audio tidak ditemukan: \`${soundName}\``, ephemeral: true });
+            }
+            return;
+        }
+
+        await interaction.deferUpdate();
         const timer = await timerRepo.get(guildId);
         if (!timer) return;
 
@@ -47,7 +96,7 @@ export async function handleInteractionCreate({ args: [interaction], scope }: Ha
             return;
         }
 
-        switch (interaction.customId) {
+        switch (customId) {
             case BUTTON_SKIP:
                 await skipCurrentAthlete(guildId);
                 await updateStatusMessage(guildId, scope);

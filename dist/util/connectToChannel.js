@@ -8,9 +8,8 @@ const voice_1 = require("@discordjs/voice");
 const environment_1 = require("../environment");
 const logger_1 = __importDefault(require("../services/logger"));
 async function connectToChannel(channel) {
-    if (!channel.joinable) {
+    if (!channel.joinable)
         return undefined;
-    }
     const connection = (0, voice_1.joinVoiceChannel)({
         channelId: channel.id,
         guildId: channel.guild.id,

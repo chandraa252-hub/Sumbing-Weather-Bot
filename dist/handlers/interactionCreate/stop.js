@@ -27,7 +27,9 @@ async function stop(interaction, scope) {
     }
     const botVoice = guild.members.me?.voice;
     if (botVoice?.channelId) {
-        try { await botVoice.disconnect(); }
+        try {
+            await botVoice.disconnect();
+        }
         catch (e) {
             logger_1.default.warn(guildId, `Gateway voice disconnect failed: ${e}`);
         }
