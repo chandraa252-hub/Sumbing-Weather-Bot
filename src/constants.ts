@@ -17,6 +17,7 @@ export const SLASH_COMMAND = {
         start: `start${suffix}`,
         stop: `stop${suffix}`,
         help: `help${suffix}`,
+        join: `join${suffix}`,
         status: `status${suffix}`,
         leave: `leave${suffix}`,
         athletes: {
