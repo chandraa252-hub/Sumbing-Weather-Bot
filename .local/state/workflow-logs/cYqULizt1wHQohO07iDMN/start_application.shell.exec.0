@@ -1,0 +1,19 @@
+
+> tttt-discord@1.1.4 start
+> node .
+
+[1G[0K[Server] Connecting to redis
+[Server] Sentry environment: production
+[Server] Initializing...
+[Server] Pinging redis
+[Server] Redis connection established
+[Server] Logging in to Discord...
+[Server] Discord login successful
+[Server] Starting timer loop
+[Server] Main Bot: true
+[Server] Bot Id: 1
+[Server] Member of 8 server(s)
+(node:2082) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[Server] 0 running timer(s)
+[Server] Updating slash commands for 8 guild(s)

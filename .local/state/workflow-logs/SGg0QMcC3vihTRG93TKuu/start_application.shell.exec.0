@@ -1,0 +1,195 @@
+
+> tttt-discord@1.1.4 start
+> node .
+
+[1G[0K[Server] Connecting to redis
+[Server] Sentry environment: production
+[Server] Initializing...
+[Server] Pinging redis
+[Server] Redis connection established
+[Server] Logging in to Discord...
+[Server] Discord login successful
+[Server] Starting timer loop
+[Server] Main Bot: true
+[Server] Bot Id: 1
+[Server] Member of 8 server(s)
+(node:1576) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[Server] 0 running timer(s)
+[Server] No need to update slash commands
+[G:1407983249346662451] Slash Command: soundboard
+[Server] DiscordAPIError[10062]: Unknown interaction
+    at handleErrors [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:762:13[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async BurstHandler.runRequest [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:866:23[90m)[39m
+    at async _REST.request [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:1307:22[90m)[39m
+    at async ChatInputCommandInteraction.deferReply [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/structures/interfaces/InteractionResponses.js:122:22[90m)[39m
+    at async handleInteractionCreate [90m(/home/runner/workspace/[39mdist/handlers/interactionCreate/index.js:120:5[90m)[39m
+    at async [90m/home/runner/workspace/[39mdist/services/sentry.js:26:24
+    at async Client.wrappedFunction [90m(/home/runner/workspace/[39mdist/services/sentry.js:23:9[90m)[39m {
+  requestBody: { files: [90mundefined[39m, json: { type: [33m5[39m, data: [36m[Object][39m } },
+  rawError: { message: [32m'Unknown interaction'[39m, code: [33m10062[39m },
+  code: [33m10062[39m,
+  status: [33m404[39m,
+  method: [32m'POST'[39m,
+  url: [32m'https://discord.com/api/v10/interactions/1508653072669347970/aW50ZXJhY3Rpb246MTUwODY1MzA3MjY2OTM0Nzk3MDplRnlJOFRiczc4RGQyUUZqaTZWbm45SnJNSmVwSVVoSWpQZHB2bWtSVHk0V1c3MzBJNzhMQzRXcThPbW01NUNJMjFiOGlUaVNoamtSR0VNYktsS05JZjFiZ0U2UU9FTEJPOU1tV3NXNXpTaWt1MVd5ZDhUcGZWNlhCOU9pV2xrSg/callback?with_response=false'[39m
+}
+[Server] Error captured as 164c75b7fbd84d318261a38812b47f3f
+[G:1407983249346662451] Slash Command: start
+[Server] DiscordAPIError[10062]: Unknown interaction
+    at handleErrors [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:762:13[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async BurstHandler.runRequest [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:866:23[90m)[39m
+    at async _REST.request [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:1307:22[90m)[39m
+    at async ChatInputCommandInteraction.deferReply [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/structures/interfaces/InteractionResponses.js:122:22[90m)[39m
+    at async handleInteractionCreate [90m(/home/runner/workspace/[39mdist/handlers/interactionCreate/index.js:120:5[90m)[39m
+    at async [90m/home/runner/workspace/[39mdist/services/sentry.js:26:24
+    at async Client.wrappedFunction [90m(/home/runner/workspace/[39mdist/services/sentry.js:23:9[90m)[39m {
+  requestBody: { files: [90mundefined[39m, json: { type: [33m5[39m, data: [36m[Object][39m } },
+  rawError: { message: [32m'Unknown interaction'[39m, code: [33m10062[39m },
+  code: [33m10062[39m,
+  status: [33m404[39m,
+  method: [32m'POST'[39m,
+  url: [32m'https://discord.com/api/v10/interactions/1508653133784547478/aW50ZXJhY3Rpb246MTUwODY1MzEzMzc4NDU0NzQ3ODpWYjhEUzEyRlNFTzF5YXVIWWRUdmZ1MTRLZ0xkQVNHUG10Y3lkampHdDZuaWp2SWFHUUVBVXVRZ3llWkJtOUoyWVF3Y3dkR0ZoamMwVm1ybjZNR1V0NktJSER1MnN0Nk5qMTZEQnhXNlNrRVBtOXNOUk1PYVY1b0E3NHFGYzJwcA/callback?with_response=false'[39m
+}
+[Server] Error captured as e93a9c615de04fd0a28a72d6392b51f1
+[G:1407983249346662451] Button: soundboard_open by 762372166733529088
+[Server] DiscordAPIError[40060]: Interaction has already been acknowledged.
+    at handleErrors [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:762:13[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async BurstHandler.runRequest [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:866:23[90m)[39m
+    at async _REST.request [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:1307:22[90m)[39m
+    at async ButtonInteraction.deferUpdate [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/structures/interfaces/InteractionResponses.js:305:22[90m)[39m
+    at async handleInteractionCreate [90m(/home/runner/workspace/[39mdist/handlers/interactionCreate/index.js:45:13[90m)[39m
+    at async [90m/home/runner/workspace/[39mdist/services/sentry.js:26:24
+    at async Client.wrappedFunction [90m(/home/runner/workspace/[39mdist/services/sentry.js:23:9[90m)[39m {
+  requestBody: { files: [90mundefined[39m, json: { type: [33m6[39m } },
+  rawError: {
+    message: [32m'Interaction has already been acknowledged.'[39m,
+    code: [33m40060[39m
+  },
+  code: [33m40060[39m,
+  status: [33m400[39m,
+  method: [32m'POST'[39m,
+  url: [32m'https://discord.com/api/v10/interactions/1508653160095416441/aW50ZXJhY3Rpb246MTUwODY1MzE2MDA5NTQxNjQ0MTpIOEw5ZEhsY1luakN4QXh6Y1BWM2VGek9hcDNaQW83Q1RsZHJENDYwMzFIb0VuNjVHN3lQY0M5WFdOMTd3bDl5ZDk0ckhlOEVBM282d3BKdTV5Nnp2NVk0OEtweElxQ3lIbWVobXlwR0xURmFzeXRySU1TSlBnTjhRa1dZODRoVA/callback?with_response=false'[39m
+}
+[Server] Error captured as 1dd8b5f7927d45518572a66926128317
+[G:1407983249346662451] Button: soundboard_close by 762372166733529088
+[Server] DiscordAPIError[10062]: Unknown interaction
+    at handleErrors [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:762:13[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async BurstHandler.runRequest [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:866:23[90m)[39m
+    at async _REST.request [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:1307:22[90m)[39m
+    at async ButtonInteraction.deferUpdate [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/structures/interfaces/InteractionResponses.js:305:22[90m)[39m
+    at async handleInteractionCreate [90m(/home/runner/workspace/[39mdist/handlers/interactionCreate/index.js:51:13[90m)[39m
+    at async [90m/home/runner/workspace/[39mdist/services/sentry.js:26:24
+    at async Client.wrappedFunction [90m(/home/runner/workspace/[39mdist/services/sentry.js:23:9[90m)[39m {
+  requestBody: { files: [90mundefined[39m, json: { type: [33m6[39m } },
+  rawError: { message: [32m'Unknown interaction'[39m, code: [33m10062[39m },
+  code: [33m10062[39m,
+  status: [33m404[39m,
+  method: [32m'POST'[39m,
+  url: [32m'https://discord.com/api/v10/interactions/1508653177799573636/aW50ZXJhY3Rpb246MTUwODY1MzE3Nzc5OTU3MzYzNjpzcFZSbTFnQWMyNDRZeWtMSlNDN2JzYVY5U1pvNG9GWE9FSjF4cWhGOTcybjlLU0ZMUmZCUmplTEw1OWJmQXZDdjBwa0xmaEdwejJ6V0VKeXJKQTVETndpSFk2aGNTNUs2YUFiMVZxTDhhbXFNekh4Ym5KbjlrZFpScHlRVEZnbA/callback?with_response=false'[39m
+}
+[Server] Error captured as d78898a8cb4046efb1b26e8472ad5cb9
+[G:1407983249346662451] Button: timer_stop by 762372166733529088
+[G:1407983249346662451] Slash Command: start
+[G:1407983249346662451] Timer is already running
+[G:1407983249346662451] Slash Command: stop
+[Server] DiscordAPIError[10062]: Unknown interaction
+    at handleErrors [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:762:13[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async BurstHandler.runRequest [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:866:23[90m)[39m
+    at async _REST.request [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:1307:22[90m)[39m
+    at async ChatInputCommandInteraction.deferReply [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/structures/interfaces/InteractionResponses.js:122:22[90m)[39m
+    at async handleInteractionCreate [90m(/home/runner/workspace/[39mdist/handlers/interactionCreate/index.js:120:5[90m)[39m
+    at async [90m/home/runner/workspace/[39mdist/services/sentry.js:26:24
+    at async Client.wrappedFunction [90m(/home/runner/workspace/[39mdist/services/sentry.js:23:9[90m)[39m {
+  requestBody: { files: [90mundefined[39m, json: { type: [33m5[39m, data: [36m[Object][39m } },
+  rawError: { message: [32m'Unknown interaction'[39m, code: [33m10062[39m },
+  code: [33m10062[39m,
+  status: [33m404[39m,
+  method: [32m'POST'[39m,
+  url: [32m'https://discord.com/api/v10/interactions/1508661463420633180/aW50ZXJhY3Rpb246MTUwODY2MTQ2MzQyMDYzMzE4MDpBTURxbXVLdU83MWl3aWVodHc0TVZLQ2h1VDRCUWNyVGplRGdGcFBxdUhlVUdmQmM0b1VsU3JBWVkyZDBqOHlBRXpWOHFXVHJGWGViQU1GM3ROemtXMlR0ekdDOGhmUU1hMm9uaWJ1UFZ2YmREbnFYdDAxOGozYUhSdUpkdkhIbw/callback?with_response=false'[39m
+}
+[Server] Error captured as 48fbd25b5df6470ab2f0644b3eaa43b9
+[G:1407983249346662451] Slash Command: start
+[Server] DiscordAPIError[10062]: Unknown interaction
+    at handleErrors [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:762:13[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async BurstHandler.runRequest [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:866:23[90m)[39m
+    at async _REST.request [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:1307:22[90m)[39m
+    at async ChatInputCommandInteraction.deferReply [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/structures/interfaces/InteractionResponses.js:122:22[90m)[39m
+    at async handleInteractionCreate [90m(/home/runner/workspace/[39mdist/handlers/interactionCreate/index.js:120:5[90m)[39m
+    at async [90m/home/runner/workspace/[39mdist/services/sentry.js:26:24
+    at async Client.wrappedFunction [90m(/home/runner/workspace/[39mdist/services/sentry.js:23:9[90m)[39m {
+  requestBody: { files: [90mundefined[39m, json: { type: [33m5[39m, data: [36m[Object][39m } },
+  rawError: { message: [32m'Unknown interaction'[39m, code: [33m10062[39m },
+  code: [33m10062[39m,
+  status: [33m404[39m,
+  method: [32m'POST'[39m,
+  url: [32m'https://discord.com/api/v10/interactions/1508661479749058640/aW50ZXJhY3Rpb246MTUwODY2MTQ3OTc0OTA1ODY0MDphSVlHRkMzM0ZHQ0xGRnJYTHNHbzJtSUhSUHhyOFQ5dk1BV3RhUHpxa3RvMkRQclJBY3hOVWhFSnRuckk5MTh2NGpzcUN0UkJEcWhrVjJIUHdESzZjNVBNN053cmJtNUNhUWE0YXg0NDZEZ0FJdE5IQWdQNlF2VGg2WHA2bjd1UA/callback?with_response=false'[39m
+}
+[Server] Error captured as 13f0a258c208452dabe305cb18cc085a
+[G:1407983249346662451] Button: soundboard_open by 762372166733529088
+[Server] DiscordAPIError[10062]: Unknown interaction
+    at handleErrors [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:762:13[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async BurstHandler.runRequest [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:866:23[90m)[39m
+    at async _REST.request [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:1307:22[90m)[39m
+    at async ButtonInteraction.deferUpdate [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/structures/interfaces/InteractionResponses.js:305:22[90m)[39m
+    at async handleInteractionCreate [90m(/home/runner/workspace/[39mdist/handlers/interactionCreate/index.js:45:13[90m)[39m
+    at async [90m/home/runner/workspace/[39mdist/services/sentry.js:26:24
+    at async Client.wrappedFunction [90m(/home/runner/workspace/[39mdist/services/sentry.js:23:9[90m)[39m {
+  requestBody: { files: [90mundefined[39m, json: { type: [33m6[39m } },
+  rawError: { message: [32m'Unknown interaction'[39m, code: [33m10062[39m },
+  code: [33m10062[39m,
+  status: [33m404[39m,
+  method: [32m'POST'[39m,
+  url: [32m'https://discord.com/api/v10/interactions/1508661500909322251/aW50ZXJhY3Rpb246MTUwODY2MTUwMDkwOTMyMjI1MTpFNUIzaURDZWxxU3k4S253cVR0NWlHSXFncGROT04xaEJiSmFSNFRsV1JnU1FCcUNSaThVemhLb3dSTUZvOTJTWDdhdWFOcVJmOGptTjhBZmlUZzFtUVNZRDg1RHNIT2FoQ1BDYUdVbDFWTE1JSlBoVm9jTzNnSE1sSDMwWGFSRg/callback?with_response=false'[39m
+}
+[Server] Error captured as 540e31502551411db738a9373fede081
+[G:1407983249346662451] Button: sound_akan_kami_genjot by 762372166733529088
+[G:1407983249346662451] Joined VC:1469745755991572511
+[G:1407983249346662451] Button: sound_akan_saya_lawan by 762372166733529088
+[Server] DiscordAPIError[10062]: Unknown interaction
+    at handleErrors [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:762:13[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async BurstHandler.runRequest [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:866:23[90m)[39m
+    at async _REST.request [90m(/home/runner/workspace/[39mnode_modules/[4m@discordjs/rest[24m/dist/index.js:1307:22[90m)[39m
+    at async ButtonInteraction.deferUpdate [90m(/home/runner/workspace/[39mnode_modules/[4mdiscord.js[24m/src/structures/interfaces/InteractionResponses.js:305:22[90m)[39m
+    at async handleInteractionCreate [90m(/home/runner/workspace/[39mdist/handlers/interactionCreate/index.js:56:13[90m)[39m
+    at async [90m/home/runner/workspace/[39mdist/services/sentry.js:26:24
+    at async Client.wrappedFunction [90m(/home/runner/workspace/[39mdist/services/sentry.js:23:9[90m)[39m {
+  requestBody: { files: [90mundefined[39m, json: { type: [33m6[39m } },
+  rawError: { message: [32m'Unknown interaction'[39m, code: [33m10062[39m },
+  code: [33m10062[39m,
+  status: [33m404[39m,
+  method: [32m'POST'[39m,
+  url: [32m'https://discord.com/api/v10/interactions/1508661540654420049/aW50ZXJhY3Rpb246MTUwODY2MTU0MDY1NDQyMDA0OTpXQTdYd2JRYVJYZ3ZLVnZsME9GR3RBcjZJYjJwU2IxQW4yZVFwQnR2UkJCSEF3OTZnWkVRRjV0QVIyQmhUa2ZKTE9DZ0lndHl5ZkZzUjRUM0ljajY1blpTWmxFNm1EMDZ3bU9BWXhPOVQ4eTFTNUFXdDVXOERabjJ4TEJ0akY0cw/callback?with_response=false'[39m
+}
+[Server] Error captured as 840f702881814a1988b08cbf3cfe52aa
+[G:1407983249346662451] Button: soundboard_close by 762372166733529088
+[G:1407983249346662451] Button: soundboard_open by 762372166733529088
+[G:1407983249346662451] Button: sound_akan_kami_genjot by 762372166733529088
+node:events:502
+      throw er; // Unhandled 'error' event
+      ^
+
+SocketClosedUnexpectedlyError: Socket closed unexpectedly
+    at Socket.<anonymous> [90m(/home/runner/workspace/[39mnode_modules/[4m@redis/client[24m/dist/lib/client/socket.js:194:118[90m)[39m
+[90m    at Object.onceWrapper (node:events:639:26)[39m
+[90m    at Socket.emit (node:events:524:28)[39m
+[90m    at TCP.<anonymous> (node:net:343:12)[39m
+[90m    at TCP.callbackTrampoline (node:internal/async_hooks:130:17)[39m
+Emitted 'error' event on Commander instance at:
+    at RedisSocket.<anonymous> [90m(/home/runner/workspace/[39mnode_modules/[4m@redis/client[24m/dist/lib/client/index.js:422:14[90m)[39m
+[90m    at RedisSocket.emit (node:events:524:28)[39m
+    at RedisSocket._RedisSocket_onSocketError [90m(/home/runner/workspace/[39mnode_modules/[4m@redis/client[24m/dist/lib/client/socket.js:218:10[90m)[39m
+    at Socket.<anonymous> [90m(/home/runner/workspace/[39mnode_modules/[4m@redis/client[24m/dist/lib/client/socket.js:194:107[90m)[39m
+[90m    at Object.onceWrapper (node:events:639:26)[39m
+    [... lines matching original stack trace ...]
+[90m    at TCP.callbackTrampoline (node:internal/async_hooks:130:17)[39m
+
+Node.js v20.20.0
+[1G[0K⠙[1G[0K
