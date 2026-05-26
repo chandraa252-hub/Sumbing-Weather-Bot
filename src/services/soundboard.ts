@@ -1,4 +1,4 @@
-import { createAudioPlayer, createAudioResource, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
+import { createAudioPlayer, createAudioResource, entersState, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
 import path from "path";
 import fs from "fs";
 import logger from "./logger";
@@ -35,7 +35,11 @@ export function getSoundPath(soundName: string): string | undefined {
 }
 
 export async function playSound(soundName: string, connection: VoiceConnection): Promise<boolean> {
-    if (connection.state.status !== VoiceConnectionStatus.Ready) return false;
+    try {
+        await entersState(connection, VoiceConnectionStatus.Ready, 10_000);
+    } catch {
+        return false;
+    }
     const soundPath = getSoundPath(soundName);
     if (!soundPath) {
         logger.info(connection.joinConfig.guildId, `Sound not found: ${soundName}`);

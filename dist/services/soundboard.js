@@ -35,8 +35,12 @@ function getSoundPath(soundName) {
     return undefined;
 }
 async function playSound(soundName, connection) {
-    if (connection.state.status !== voice_1.VoiceConnectionStatus.Ready)
+    try {
+        await (0, voice_1.entersState)(connection, voice_1.VoiceConnectionStatus.Ready, 10_000);
+    }
+    catch {
         return false;
+    }
     const soundPath = getSoundPath(soundName);
     if (!soundPath) {
         logger_1.default.info(connection.joinConfig.guildId, `Sound not found: ${soundName}`);
