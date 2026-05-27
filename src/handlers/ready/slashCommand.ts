@@ -7,7 +7,7 @@ import { slashCommandHashRepo } from "../../persistence";
 import logger from "../../services/logger";
 
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 11;
+const SLASH_COMMAND_REGISTRATION_VERSION = 12;
 
 export async function initCommands() {
     const commands = getSlashCommands();
@@ -111,6 +111,19 @@ export function getSlashCommands() {
             type: ApplicationCommandType.ChatInput,
             name: S.join,
             description: "Join your voice channel and show the soundboard",
+        },
+        {
+            type: ApplicationCommandType.ChatInput,
+            name: S.sleepcall,
+            description: "Stay in voice channel 24/7 with YouTube audio",
+            options: [
+                {
+                    type: ApplicationCommandOptionType.String,
+                    name: "url",
+                    description: "YouTube URL to stream (optional if already saved)",
+                    required: false,
+                },
+            ],
         },
         {
             type: ApplicationCommandType.ChatInput,

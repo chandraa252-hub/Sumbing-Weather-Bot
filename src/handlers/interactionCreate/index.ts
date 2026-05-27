@@ -21,6 +21,7 @@ import { status } from "./status";
 import { leave } from "./leave";
 import { soundboard } from "./soundboard";
 import { join } from "./join";
+import { sleepcall } from "./sleepcall";
 
 const commandsMap = {
     [SLASH_COMMAND.commands.help]: help,
@@ -34,6 +35,7 @@ const commandsMap = {
     [SLASH_COMMAND.commands.leave]: leave,
     [SLASH_COMMAND.commands.soundboard]: soundboard,
     [SLASH_COMMAND.commands.join]: join,
+    [SLASH_COMMAND.commands.sleepcall]: sleepcall,
 };
 
 export async function handleInteractionCreate({ args: [interaction], scope }: HandlerProps<[Interaction]>) {
