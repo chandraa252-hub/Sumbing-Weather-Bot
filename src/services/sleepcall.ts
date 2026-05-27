@@ -29,7 +29,14 @@ function getYtDlpUrl(youtubeUrl: string): Promise<string> {
     return new Promise((resolve, reject) => {
         execFile(
             "yt-dlp",
-            ["-f", "bestaudio/best", "--get-url", "--no-playlist", youtubeUrl],
+            [
+                "-f", "bestaudio/best",
+                "--get-url",
+                "--no-playlist",
+                "--extractor-args", "youtube:player_client=android,web",
+                "--no-warnings",
+                youtubeUrl,
+            ],
             { timeout: 30000 },
             (err, stdout) => {
                 if (err) return reject(err);
