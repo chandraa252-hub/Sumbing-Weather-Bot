@@ -46,6 +46,18 @@ async function handleInteractionCreate({ args: [interaction], scope }) {
         if (customId === constants_1.BUTTON_SOUNDBOARD_OPEN) {
             await interaction.deferUpdate();
             const config = await persistence_1.configRepo.get(guildId);
+            // Pre-connect to VC in background so connection is ready before sound button pressed
+            const member = interaction.member;
+            const voiceChannelId = member?.voice?.channelId;
+            if (voiceChannelId) {
+                const existing = (0, voice_1.getVoiceConnection)(guildId, environment_1.environment.botId);
+                if (!existing) {
+                    const channel = interaction.guild?.channels.cache.get(voiceChannelId);
+                    if (channel) {
+                        (0, connectToChannel_1.connectToChannel)(channel).catch(() => {});
+                    }
+                }
+            }
             await interaction.followUp({ ...(0, soundboard_2.createSoundboardPanel)(config.languageKey), ephemeral: true });
             return;
         }

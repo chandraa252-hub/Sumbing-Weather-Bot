@@ -46,6 +46,18 @@ export async function handleInteractionCreate({ args: [interaction], scope }: Ha
         if (customId === BUTTON_SOUNDBOARD_OPEN) {
             await interaction.deferUpdate();
             const config = await configRepo.get(guildId);
+            // Pre-connect to VC in background so connection is ready before sound button pressed
+            const member = interaction.member as GuildMember | null;
+            const voiceChannelId = member?.voice?.channelId;
+            if (voiceChannelId) {
+                const existing = getVoiceConnection(guildId, environment.botId);
+                if (!existing) {
+                    const channel = interaction.guild?.channels.cache.get(voiceChannelId) as VoiceChannel | undefined;
+                    if (channel) {
+                        connectToChannel(channel).catch(() => {});
+                    }
+                }
+            }
             await interaction.followUp({ ...createSoundboardPanel(config.languageKey), ephemeral: true });
             return;
         }
