@@ -28,14 +28,41 @@ async function sleepcall(interaction, _scope) {
         return;
     }
 
+    if (action === "status") {
+        const saved = await persistence_1.sleepcallRepo.get(guildId);
+        if (!saved || !(0, sleepcall_1.isSleepcallActive)(guildId)) {
+            await interaction.editReply("ℹ️ Tidak ada sleepcall yang sedang aktif di server ini.");
+            return;
+        }
+        const elapsed = Date.now() - saved.startTime;
+        const embed = new discord_js_1.EmbedBuilder()
+            .setTitle("📊 Status Sleepcall")
+            .setDescription(
+                [
+                    `🔊 Voice berjalan selama: **${(0, sleepcall_1.formatDuration)(elapsed)}**`,
+                    `🎵 Sedang memutar: **${saved.videoTitle || "—"}**`,
+                    `🏆 Milestone berikutnya: ${(0, sleepcall_1.getNextMilestoneText)(saved.startTime)}`,
+                ].join("\n")
+            )
+            .setColor(0x57f287);
+        await interaction.editReply({ embeds: [embed] });
+        return;
+    }
+
     if ((0, sleepcall_1.isSleepcallActive)(guildId) && urlOption) {
         const saved = await persistence_1.sleepcallRepo.get(guildId);
         if (saved) {
-            const updated = { ...saved, youtubeUrl: urlOption };
+            let videoTitle = urlOption;
+            try {
+                videoTitle = await (0, sleepcall_1.getYtDlpTitle)(urlOption);
+            } catch {
+                videoTitle = urlOption;
+            }
+            const updated = { ...saved, youtubeUrl: urlOption, videoTitle };
             await persistence_1.sleepcallRepo.set(updated);
             (0, sleepcall_1.startSleepcall)(guildId, saved.channelId, urlOption, guild, saved.textChannelId, saved.startTime);
             log.info(guildId, `Sleepcall URL updated to: ${urlOption}`);
-            await interaction.editReply(`✅ URL sleepcall diperbarui!\n🎵 Sekarang memutar dari: ${urlOption}`);
+            await interaction.editReply(`✅ URL sleepcall diperbarui!\n🎵 Sekarang memutar: **${videoTitle}**`);
             return;
         }
     }
@@ -61,8 +88,17 @@ async function sleepcall(interaction, _scope) {
         return;
     }
 
+    await interaction.editReply("⏳ Mengambil info video, mohon tunggu...");
+
+    let videoTitle = youtubeUrl;
+    try {
+        videoTitle = await (0, sleepcall_1.getYtDlpTitle)(youtubeUrl);
+    } catch {
+        videoTitle = youtubeUrl;
+    }
+
     const startTime = Date.now();
-    await persistence_1.sleepcallRepo.set({ guildId, channelId: voiceChannel.id, youtubeUrl, textChannelId, startTime });
+    await persistence_1.sleepcallRepo.set({ guildId, channelId: voiceChannel.id, youtubeUrl, textChannelId, startTime, videoTitle });
 
     const conn = await (0, connectToChannel_1.connectToChannel)(voiceChannel);
     if (!conn) {
@@ -72,16 +108,14 @@ async function sleepcall(interaction, _scope) {
 
     (0, sleepcall_1.startSleepcall)(guildId, voiceChannel.id, youtubeUrl, guild, textChannelId, startTime);
 
-    log.info(guildId, `Sleepcall started in VC:${voiceChannel.id} url:${youtubeUrl}`);
+    log.info(guildId, `Sleepcall started in VC:${voiceChannel.id} title:"${videoTitle}"`);
 
     const embed = new discord_js_1.EmbedBuilder()
         .setTitle("😴 Sleepcall Mode Aktif")
         .setDescription(
             [
                 `Bot akan tetap di **${voiceChannel.name}** selama 24/7.`,
-                `🎵 Memutar live music dari YouTube.`,
-                ``,
-                `Link: ${youtubeUrl}`,
+                `🎵 Memutar: **${videoTitle}**`,
                 ``,
                 `Gunakan \`/sleepcall action:stop\` atau \`/leave\` untuk menghentikan.`,
             ].join("\n")

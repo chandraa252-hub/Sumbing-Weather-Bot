@@ -14,7 +14,7 @@ const discord_1 = require("../../discord");
 const persistence_1 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 13;
+const SLASH_COMMAND_REGISTRATION_VERSION = 14;
 async function initCommands() {
     const commands = getSlashCommands();
     const commandHash = (0, object_hash_1.default)({ version: SLASH_COMMAND_REGISTRATION_VERSION, commands });
@@ -125,6 +125,7 @@ function getSlashCommands() {
                     choices: [
                         { name: "▶️ Start", value: "start" },
                         { name: "⏹️ Stop", value: "stop" },
+                        { name: "📊 Status", value: "status" },
                     ],
                 },
                 {

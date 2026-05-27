@@ -19,7 +19,7 @@ const ffmpegPath: string = (ffmpegStatic as any).default ?? ffmpegStatic;
 
 const MAX_CONSECUTIVE_FAILURES = 5;
 
-const MILESTONES: { seconds: number; label: string }[] = [
+export const MILESTONES: { seconds: number; label: string }[] = [
     { seconds: 86400,     label: "1 hari" },
     { seconds: 172800,    label: "2 hari" },
     { seconds: 259200,    label: "3 hari" },
@@ -55,6 +55,31 @@ const activeSleepcalls = new Map<string, SleepcallController>();
 
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function formatDuration(ms: number): string {
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days} hari`);
+    if (hours > 0) parts.push(`${hours} jam`);
+    if (minutes > 0) parts.push(`${minutes} menit`);
+    if (seconds > 0 || parts.length === 0) parts.push(`${seconds} detik`);
+    return parts.join(" ");
+}
+
+export function getNextMilestoneText(startTime: number): string {
+    const elapsed = (Date.now() - startTime) / 1000;
+    for (const m of MILESTONES) {
+        if (elapsed < m.seconds) {
+            const remaining = (m.seconds - elapsed) * 1000;
+            return `**${m.label}** (${formatDuration(remaining)} lagi)`;
+        }
+    }
+    return "Sudah melewati semua milestone! 🎉";
 }
 
 function getLastPassedMilestoneIndex(startTime: number): number {
@@ -96,6 +121,28 @@ function startMilestoneChecker(
             nextIndex++;
         }
     }, 60_000);
+}
+
+export function getYtDlpTitle(youtubeUrl: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        execFile(
+            "yt-dlp",
+            [
+                "--get-title",
+                "--no-playlist",
+                "--extractor-args", "youtube:player_client=android,web",
+                "--no-warnings",
+                youtubeUrl,
+            ],
+            { timeout: 30000 },
+            (err, stdout) => {
+                if (err) return reject(err);
+                const title = stdout.trim().split("\n")[0];
+                if (!title) return reject(new Error("yt-dlp returned empty title"));
+                resolve(title);
+            }
+        );
+    });
 }
 
 function getYtDlpUrl(youtubeUrl: string): Promise<string> {

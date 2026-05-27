@@ -1,7 +1,14 @@
 import { ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
 import { sleepcallRepo } from "../../persistence";
 import { connectToChannel } from "../../util/connectToChannel";
-import { startSleepcall, stopSleepcall, isSleepcallActive } from "../../services/sleepcall";
+import {
+    startSleepcall,
+    stopSleepcall,
+    isSleepcallActive,
+    getYtDlpTitle,
+    formatDuration,
+    getNextMilestoneText,
+} from "../../services/sleepcall";
 import logger from "../../services/logger";
 import { HandlerProps } from "../../services/sentry";
 
@@ -25,14 +32,41 @@ export async function sleepcall(interaction: ChatInputCommandInteraction, _scope
         return;
     }
 
+    if (action === "status") {
+        const saved = await sleepcallRepo.get(guildId);
+        if (!saved || !isSleepcallActive(guildId)) {
+            await interaction.editReply("ℹ️ Tidak ada sleepcall yang sedang aktif di server ini.");
+            return;
+        }
+        const elapsed = Date.now() - saved.startTime;
+        const embed = new EmbedBuilder()
+            .setTitle("📊 Status Sleepcall")
+            .setDescription(
+                [
+                    `🔊 Voice berjalan selama: **${formatDuration(elapsed)}**`,
+                    `🎵 Sedang memutar: **${saved.videoTitle || "—"}**`,
+                    `🏆 Milestone berikutnya: ${getNextMilestoneText(saved.startTime)}`,
+                ].join("\n")
+            )
+            .setColor(0x57f287);
+        await interaction.editReply({ embeds: [embed] });
+        return;
+    }
+
     if (isSleepcallActive(guildId) && urlOption) {
         const saved = await sleepcallRepo.get(guildId);
         if (saved) {
-            const updated = { ...saved, youtubeUrl: urlOption };
+            let videoTitle = urlOption;
+            try {
+                videoTitle = await getYtDlpTitle(urlOption);
+            } catch {
+                videoTitle = urlOption;
+            }
+            const updated = { ...saved, youtubeUrl: urlOption, videoTitle };
             await sleepcallRepo.set(updated);
             startSleepcall(guildId, saved.channelId, urlOption, guild, saved.textChannelId, saved.startTime);
             logger.info(guildId, `Sleepcall URL updated to: ${urlOption}`);
-            await interaction.editReply(`✅ URL sleepcall diperbarui!\n🎵 Sekarang memutar dari: ${urlOption}`);
+            await interaction.editReply(`✅ URL sleepcall diperbarui!\n🎵 Sekarang memutar: **${videoTitle}**`);
             return;
         }
     }
@@ -58,8 +92,17 @@ export async function sleepcall(interaction: ChatInputCommandInteraction, _scope
         return;
     }
 
+    await interaction.editReply("⏳ Mengambil info video, mohon tunggu...");
+
+    let videoTitle = youtubeUrl;
+    try {
+        videoTitle = await getYtDlpTitle(youtubeUrl);
+    } catch {
+        videoTitle = youtubeUrl;
+    }
+
     const startTime = Date.now();
-    await sleepcallRepo.set({ guildId, channelId: voiceChannel.id, youtubeUrl, textChannelId, startTime });
+    await sleepcallRepo.set({ guildId, channelId: voiceChannel.id, youtubeUrl, textChannelId, startTime, videoTitle });
 
     const conn = await connectToChannel(voiceChannel as any);
     if (!conn) {
@@ -69,16 +112,14 @@ export async function sleepcall(interaction: ChatInputCommandInteraction, _scope
 
     startSleepcall(guildId, voiceChannel.id, youtubeUrl, guild, textChannelId, startTime);
 
-    logger.info(guildId, `Sleepcall started in VC:${voiceChannel.id} url:${youtubeUrl}`);
+    logger.info(guildId, `Sleepcall started in VC:${voiceChannel.id} title:"${videoTitle}"`);
 
     const embed = new EmbedBuilder()
         .setTitle("😴 Sleepcall Mode Aktif")
         .setDescription(
             [
                 `Bot akan tetap di **${voiceChannel.name}** selama 24/7.`,
-                `🎵 Memutar live music dari YouTube.`,
-                ``,
-                `Link: ${youtubeUrl}`,
+                `🎵 Memutar: **${videoTitle}**`,
                 ``,
                 `Gunakan \`/sleepcall action:stop\` atau \`/leave\` untuk menghentikan.`,
             ].join("\n")

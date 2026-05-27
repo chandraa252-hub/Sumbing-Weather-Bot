@@ -1,8 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MILESTONES = void 0;
 exports.startSleepcall = startSleepcall;
 exports.stopSleepcall = stopSleepcall;
 exports.isSleepcallActive = isSleepcallActive;
+exports.getYtDlpTitle = getYtDlpTitle;
+exports.formatDuration = formatDuration;
+exports.getNextMilestoneText = getNextMilestoneText;
 
 const { execFile, spawn } = require("child_process");
 const voice_1 = require("@discordjs/voice");
@@ -40,11 +44,37 @@ const MILESTONES = [
     { seconds: 126144000, label: "4 tahun" },
     { seconds: 157680000, label: "5 tahun" },
 ];
+exports.MILESTONES = MILESTONES;
 
 const activeSleepcalls = new Map();
 
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function formatDuration(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const parts = [];
+    if (days > 0) parts.push(`${days} hari`);
+    if (hours > 0) parts.push(`${hours} jam`);
+    if (minutes > 0) parts.push(`${minutes} menit`);
+    if (seconds > 0 || parts.length === 0) parts.push(`${seconds} detik`);
+    return parts.join(" ");
+}
+
+function getNextMilestoneText(startTime) {
+    const elapsed = (Date.now() - startTime) / 1000;
+    for (const m of MILESTONES) {
+        if (elapsed < m.seconds) {
+            const remaining = (m.seconds - elapsed) * 1000;
+            return `**${m.label}** (${formatDuration(remaining)} lagi)`;
+        }
+    }
+    return "Sudah melewati semua milestone! 🎉";
 }
 
 function getLastPassedMilestoneIndex(startTime) {
@@ -80,6 +110,28 @@ function startMilestoneChecker(guildId, textChannelId, startTime, controller) {
             nextIndex++;
         }
     }, 60_000);
+}
+
+function getYtDlpTitle(youtubeUrl) {
+    return new Promise((resolve, reject) => {
+        execFile(
+            "yt-dlp",
+            [
+                "--get-title",
+                "--no-playlist",
+                "--extractor-args", "youtube:player_client=android,web",
+                "--no-warnings",
+                youtubeUrl,
+            ],
+            { timeout: 30000 },
+            (err, stdout) => {
+                if (err) return reject(err);
+                const title = stdout.trim().split("\n")[0];
+                if (!title) return reject(new Error("yt-dlp returned empty title"));
+                resolve(title);
+            }
+        );
+    });
 }
 
 function getYtDlpUrl(youtubeUrl) {

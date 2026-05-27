@@ -6,6 +6,7 @@ export interface SleepcallState {
     youtubeUrl: string;
     textChannelId: string;
     startTime: number;
+    videoTitle: string;
 }
 
 export class SleepcallRepository {
