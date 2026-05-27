@@ -40,8 +40,10 @@ function getStatusTips(languageKey) {
     return [
         "⚠️ Stay prepared for sudden weather changes.",
         "Be careful during thunderstorm weather.",
+        BLANK_LINE,
         "☕ STMJ is recommended during nighttime weather.",
         "STMJ effect duration: 5 minutes.",
+        BLANK_LINE,
         "🪨 In Watu Kotak, STMJ + Torch is required",
         "during Extreme Weather between 02:00 - 04:00.",
     ].join("\n");

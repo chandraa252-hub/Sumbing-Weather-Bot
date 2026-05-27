@@ -120,16 +120,6 @@ export async function handleInteractionCreate({ args: [interaction], scope }: Ha
 
             case BUTTON_STOP: {
                 await stopTimer(guildId, scope);
-                const conn = getVoiceConnection(guildId, environment.botId);
-                if (conn) {
-                    logger.info(guildId, `Disconnecting from VC:${conn.joinConfig.channelId}`);
-                    conn.disconnect();
-                    conn.destroy();
-                }
-                const botVoice = interaction.guild?.members.me?.voice;
-                if (botVoice?.channelId) {
-                    try { await botVoice.disconnect(); } catch {}
-                }
                 break;
             }
         }
