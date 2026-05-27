@@ -5,12 +5,27 @@ const discord_js_1 = require("discord.js");
 const persistence_1 = require("../../persistence");
 const connectToChannel_1 = require("../../util/connectToChannel");
 const sleepcall_1 = require("../../services/sleepcall");
+// isSleepcallActive and stopSleepcall are used for the stop action
 const logger_1 = require("../../services/logger");
 
 async function sleepcall(interaction, _scope) {
     const guild = interaction.guild;
     const guildId = guild.id;
     const log = logger_1.default ?? logger_1;
+
+    const action = interaction.options.getString("action") ?? "start";
+
+    if (action === "stop") {
+        if (!(0, sleepcall_1.isSleepcallActive)(guildId)) {
+            await interaction.editReply("ℹ️ Tidak ada sleepcall yang sedang aktif di server ini.");
+            return;
+        }
+        (0, sleepcall_1.stopSleepcall)(guildId);
+        await persistence_1.sleepcallRepo.remove(guildId);
+        log.info(guildId, `Sleepcall stopped by ${interaction.user.id}`);
+        await interaction.editReply("✅ Sleepcall dihentikan. Bot tetap di voice channel.");
+        return;
+    }
 
     const member = await guild.members.fetch(interaction.user.id);
     const voiceChannel = member.voice.channel;
@@ -22,7 +37,6 @@ async function sleepcall(interaction, _scope) {
 
     const urlOption = interaction.options.getString("url");
 
-    // Use provided URL or fallback to saved URL
     let youtubeUrl = urlOption ?? null;
     if (!youtubeUrl) {
         const saved = await persistence_1.sleepcallRepo.get(guildId);
@@ -36,17 +50,14 @@ async function sleepcall(interaction, _scope) {
         return;
     }
 
-    // Save state to Redis
     await persistence_1.sleepcallRepo.set({ guildId, channelId: voiceChannel.id, youtubeUrl });
 
-    // Connect to VC first
     const conn = await (0, connectToChannel_1.connectToChannel)(voiceChannel);
     if (!conn) {
         await interaction.editReply("❌ Tidak bisa bergabung ke voice channel.");
         return;
     }
 
-    // Start sleepcall loop
     (0, sleepcall_1.startSleepcall)(guildId, voiceChannel.id, youtubeUrl, guild);
 
     log.info(guildId, `Sleepcall started in VC:${voiceChannel.id} url:${youtubeUrl}`);
@@ -60,7 +71,7 @@ async function sleepcall(interaction, _scope) {
                 ``,
                 `Link: ${youtubeUrl}`,
                 ``,
-                `Gunakan \`/leave\` untuk mengeluarkan bot.`,
+                `Gunakan \`/sleepcall action:stop\` atau \`/leave\` untuk menghentikan.`,
             ].join("\n")
         )
         .setColor(0x5865f2);

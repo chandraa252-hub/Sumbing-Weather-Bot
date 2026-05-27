@@ -14,7 +14,7 @@ const discord_1 = require("../../discord");
 const persistence_1 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 12;
+const SLASH_COMMAND_REGISTRATION_VERSION = 13;
 async function initCommands() {
     const commands = getSlashCommands();
     const commandHash = (0, object_hash_1.default)({ version: SLASH_COMMAND_REGISTRATION_VERSION, commands });
@@ -117,6 +117,16 @@ function getSlashCommands() {
             name: S.sleepcall,
             description: "Bot tetap di VC 24/7 sambil memutar live music YouTube",
             options: [
+                {
+                    type: discord_js_1.ApplicationCommandOptionType.String,
+                    name: "action",
+                    description: "Mulai atau hentikan sleepcall",
+                    required: false,
+                    choices: [
+                        { name: "▶️ Start", value: "start" },
+                        { name: "⏹️ Stop", value: "stop" },
+                    ],
+                },
                 {
                     type: discord_js_1.ApplicationCommandOptionType.String,
                     name: "url",

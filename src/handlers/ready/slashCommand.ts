@@ -7,7 +7,7 @@ import { slashCommandHashRepo } from "../../persistence";
 import logger from "../../services/logger";
 
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 12;
+const SLASH_COMMAND_REGISTRATION_VERSION = 13;
 
 export async function initCommands() {
     const commands = getSlashCommands();
@@ -115,12 +115,22 @@ export function getSlashCommands() {
         {
             type: ApplicationCommandType.ChatInput,
             name: S.sleepcall,
-            description: "Stay in voice channel 24/7 with YouTube audio",
+            description: "Bot tetap di VC 24/7 sambil memutar live music YouTube",
             options: [
                 {
                     type: ApplicationCommandOptionType.String,
+                    name: "action",
+                    description: "Mulai atau hentikan sleepcall",
+                    required: false,
+                    choices: [
+                        { name: "▶️ Start", value: "start" },
+                        { name: "⏹️ Stop", value: "stop" },
+                    ],
+                },
+                {
+                    type: ApplicationCommandOptionType.String,
                     name: "url",
-                    description: "YouTube URL to stream (optional if already saved)",
+                    description: "Link YouTube Live (opsional jika sudah pernah diset)",
                     required: false,
                 },
             ],

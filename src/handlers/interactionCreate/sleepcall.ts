@@ -1,14 +1,28 @@
 import { ChatInputCommandInteraction } from "discord.js";
 import { EmbedBuilder } from "discord.js";
-import { configRepo, sleepcallRepo } from "../../persistence";
+import { sleepcallRepo } from "../../persistence";
 import { connectToChannel } from "../../util/connectToChannel";
-import { startSleepcall } from "../../services/sleepcall";
+import { startSleepcall, stopSleepcall, isSleepcallActive } from "../../services/sleepcall";
 import logger from "../../services/logger";
 import { HandlerProps } from "../../services/sentry";
 
 export async function sleepcall(interaction: ChatInputCommandInteraction, _scope: HandlerProps<any>["scope"]) {
     const guild = interaction.guild!;
     const guildId = guild.id;
+
+    const action = interaction.options.getString("action") ?? "start";
+
+    if (action === "stop") {
+        if (!isSleepcallActive(guildId)) {
+            await interaction.editReply("ℹ️ Tidak ada sleepcall yang sedang aktif di server ini.");
+            return;
+        }
+        stopSleepcall(guildId);
+        await sleepcallRepo.remove(guildId);
+        logger.info(guildId, `Sleepcall stopped by ${interaction.user.id}`);
+        await interaction.editReply("✅ Sleepcall dihentikan. Bot tetap di voice channel.");
+        return;
+    }
 
     const member = await guild.members.fetch(interaction.user.id);
     const voiceChannel = member.voice.channel;
@@ -54,7 +68,7 @@ export async function sleepcall(interaction: ChatInputCommandInteraction, _scope
                 ``,
                 `Link: ${youtubeUrl}`,
                 ``,
-                `Gunakan \`/leave\` untuk mengeluarkan bot.`,
+                `Gunakan \`/sleepcall action:stop\` atau \`/leave\` untuk menghentikan.`,
             ].join("\n")
         )
         .setColor(0x5865f2);

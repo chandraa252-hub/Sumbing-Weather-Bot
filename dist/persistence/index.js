@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.configRepo = exports.timerRepo = exports.slashCommandHashRepo = exports.redisClient = void 0;
+exports.sleepcallRepo = exports.configRepo = exports.timerRepo = exports.slashCommandHashRepo = exports.redisClient = void 0;
 const environment_1 = require("../environment");
 const config_1 = require("./config");
 const redis_with_cache_1 = require("./redis-with-cache");
