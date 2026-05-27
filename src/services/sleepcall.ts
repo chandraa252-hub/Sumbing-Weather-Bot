@@ -8,21 +8,94 @@ import {
     StreamType,
 } from "@discordjs/voice";
 import ffmpegStatic from "ffmpeg-static";
+import { TextChannel } from "discord.js";
+import { Guild } from "discord.js";
 import logger from "./logger";
 import { environment } from "../environment";
 import { connectToChannel } from "../util/connectToChannel";
-import { Guild } from "discord.js";
+import { client } from "../discord";
 
 const ffmpegPath: string = (ffmpegStatic as any).default ?? ffmpegStatic;
 
+const MAX_CONSECUTIVE_FAILURES = 5;
+
+const MILESTONES: { seconds: number; label: string }[] = [
+    { seconds: 86400,     label: "1 hari" },
+    { seconds: 172800,    label: "2 hari" },
+    { seconds: 259200,    label: "3 hari" },
+    { seconds: 432000,    label: "5 hari" },
+    { seconds: 604800,    label: "1 minggu" },
+    { seconds: 1209600,   label: "2 minggu" },
+    { seconds: 1814400,   label: "3 minggu" },
+    { seconds: 2592000,   label: "1 bulan" },
+    { seconds: 5184000,   label: "2 bulan" },
+    { seconds: 7776000,   label: "3 bulan" },
+    { seconds: 10368000,  label: "4 bulan" },
+    { seconds: 12960000,  label: "5 bulan" },
+    { seconds: 15552000,  label: "6 bulan" },
+    { seconds: 18144000,  label: "7 bulan" },
+    { seconds: 20736000,  label: "8 bulan" },
+    { seconds: 23328000,  label: "9 bulan" },
+    { seconds: 25920000,  label: "10 bulan" },
+    { seconds: 28512000,  label: "11 bulan" },
+    { seconds: 31536000,  label: "1 tahun" },
+    { seconds: 63072000,  label: "2 tahun" },
+    { seconds: 94608000,  label: "3 tahun" },
+    { seconds: 126144000, label: "4 tahun" },
+    { seconds: 157680000, label: "5 tahun" },
+];
+
 interface SleepcallController {
     active: boolean;
+    lastMilestoneIndex: number;
+    milestoneTimer?: NodeJS.Timeout;
 }
 
 const activeSleepcalls = new Map<string, SleepcallController>();
 
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getLastPassedMilestoneIndex(startTime: number): number {
+    const elapsed = (Date.now() - startTime) / 1000;
+    let lastIndex = -1;
+    for (let i = 0; i < MILESTONES.length; i++) {
+        if (elapsed >= MILESTONES[i].seconds) lastIndex = i;
+        else break;
+    }
+    return lastIndex;
+}
+
+function startMilestoneChecker(
+    guildId: string,
+    textChannelId: string,
+    startTime: number,
+    controller: SleepcallController
+): void {
+    controller.milestoneTimer = setInterval(async () => {
+        if (!controller.active) {
+            clearInterval(controller.milestoneTimer);
+            return;
+        }
+        const elapsed = (Date.now() - startTime) / 1000;
+        let nextIndex = controller.lastMilestoneIndex + 1;
+        while (nextIndex < MILESTONES.length && elapsed >= MILESTONES[nextIndex].seconds) {
+            const milestone = MILESTONES[nextIndex];
+            try {
+                const channel = await client.channels.fetch(textChannelId);
+                if (channel?.isTextBased()) {
+                    await (channel as TextChannel).send(
+                        `🎉 **Selamat!** Voice channel sudah berjalan selama **${milestone.label}** tanpa henti! 🏆`
+                    );
+                }
+            } catch (err) {
+                logger.warn(guildId, `Sleepcall: gagal kirim pesan milestone: ${err}`);
+            }
+            controller.lastMilestoneIndex = nextIndex;
+            nextIndex++;
+        }
+    }, 60_000);
 }
 
 function getYtDlpUrl(youtubeUrl: string): Promise<string> {
@@ -115,6 +188,8 @@ async function runSleepcallLoop(
     guild: Guild,
     controller: SleepcallController
 ): Promise<void> {
+    let consecutiveFailures = 0;
+
     while (controller.active) {
         try {
             let conn = getVoiceConnection(guildId, environment.botId);
@@ -142,15 +217,26 @@ async function runSleepcallLoop(
                 }
             }
 
-            logger.info(guildId, `Sleepcall: fetching stream URL...`);
+            logger.info(guildId, "Sleepcall: fetching stream URL...");
             const streamUrl = await getYtDlpUrl(youtubeUrl);
             logger.info(guildId, "Sleepcall: stream started");
             await playLiveStream(conn, streamUrl, controller);
+
+            consecutiveFailures = 0;
+
             if (controller.active) {
                 logger.info(guildId, "Sleepcall: stream ended, restarting in 3s...");
             }
         } catch (err: any) {
-            logger.warn(guildId, `Sleepcall error: ${err?.message ?? err}`);
+            consecutiveFailures++;
+            logger.warn(guildId, `Sleepcall error (${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}): ${err?.message ?? err}`);
+            if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                logger.warn(guildId, "Sleepcall: max failures reached, stopping automatically");
+                controller.active = false;
+                if (controller.milestoneTimer) clearInterval(controller.milestoneTimer);
+                activeSleepcalls.delete(guildId);
+                break;
+            }
         }
 
         if (controller.active) {
@@ -164,11 +250,17 @@ export function startSleepcall(
     guildId: string,
     channelId: string,
     youtubeUrl: string,
-    guild: Guild
+    guild: Guild,
+    textChannelId: string,
+    startTime: number
 ): void {
     stopSleepcall(guildId);
-    const controller: SleepcallController = { active: true };
+    const controller: SleepcallController = {
+        active: true,
+        lastMilestoneIndex: getLastPassedMilestoneIndex(startTime),
+    };
     activeSleepcalls.set(guildId, controller);
+    startMilestoneChecker(guildId, textChannelId, startTime, controller);
     runSleepcallLoop(guildId, channelId, youtubeUrl, guild, controller).catch((err) => {
         logger.error(guildId, `Sleepcall fatal: ${err}`);
     });
@@ -178,6 +270,7 @@ export function stopSleepcall(guildId: string): void {
     const controller = activeSleepcalls.get(guildId);
     if (controller) {
         controller.active = false;
+        if (controller.milestoneTimer) clearInterval(controller.milestoneTimer);
         activeSleepcalls.delete(guildId);
     }
 }

@@ -10,14 +10,76 @@ const ffmpegStatic = require("ffmpeg-static");
 const logger_1 = require("./logger");
 const environment_1 = require("../environment");
 const connectToChannel_1 = require("../util/connectToChannel");
+const discord_1 = require("../discord");
 
 const ffmpegPath = ffmpegStatic.default ?? ffmpegStatic;
+const MAX_CONSECUTIVE_FAILURES = 5;
 
-// In-memory controller map: guildId -> { active: boolean }
+const MILESTONES = [
+    { seconds: 86400,     label: "1 hari" },
+    { seconds: 172800,    label: "2 hari" },
+    { seconds: 259200,    label: "3 hari" },
+    { seconds: 432000,    label: "5 hari" },
+    { seconds: 604800,    label: "1 minggu" },
+    { seconds: 1209600,   label: "2 minggu" },
+    { seconds: 1814400,   label: "3 minggu" },
+    { seconds: 2592000,   label: "1 bulan" },
+    { seconds: 5184000,   label: "2 bulan" },
+    { seconds: 7776000,   label: "3 bulan" },
+    { seconds: 10368000,  label: "4 bulan" },
+    { seconds: 12960000,  label: "5 bulan" },
+    { seconds: 15552000,  label: "6 bulan" },
+    { seconds: 18144000,  label: "7 bulan" },
+    { seconds: 20736000,  label: "8 bulan" },
+    { seconds: 23328000,  label: "9 bulan" },
+    { seconds: 25920000,  label: "10 bulan" },
+    { seconds: 28512000,  label: "11 bulan" },
+    { seconds: 31536000,  label: "1 tahun" },
+    { seconds: 63072000,  label: "2 tahun" },
+    { seconds: 94608000,  label: "3 tahun" },
+    { seconds: 126144000, label: "4 tahun" },
+    { seconds: 157680000, label: "5 tahun" },
+];
+
 const activeSleepcalls = new Map();
 
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getLastPassedMilestoneIndex(startTime) {
+    const elapsed = (Date.now() - startTime) / 1000;
+    let lastIndex = -1;
+    for (let i = 0; i < MILESTONES.length; i++) {
+        if (elapsed >= MILESTONES[i].seconds) lastIndex = i;
+        else break;
+    }
+    return lastIndex;
+}
+
+function startMilestoneChecker(guildId, textChannelId, startTime, controller) {
+    controller.milestoneTimer = setInterval(async () => {
+        if (!controller.active) {
+            clearInterval(controller.milestoneTimer);
+            return;
+        }
+        const elapsed = (Date.now() - startTime) / 1000;
+        let nextIndex = controller.lastMilestoneIndex + 1;
+        while (nextIndex < MILESTONES.length && elapsed >= MILESTONES[nextIndex].seconds) {
+            const milestone = MILESTONES[nextIndex];
+            try {
+                const channel = await discord_1.client.channels.fetch(textChannelId);
+                if (channel?.isTextBased()) {
+                    await channel.send(`🎉 **Selamat!** Voice channel sudah berjalan selama **${milestone.label}** tanpa henti! 🏆`);
+                }
+            } catch (err) {
+                const log = logger_1.default ?? logger_1;
+                log.warn(guildId, `Sleepcall: gagal kirim pesan milestone: ${err}`);
+            }
+            controller.lastMilestoneIndex = nextIndex;
+            nextIndex++;
+        }
+    }, 60_000);
 }
 
 function getYtDlpUrl(youtubeUrl) {
@@ -101,6 +163,8 @@ function playLiveStream(conn, streamUrl, controller) {
 
 async function runSleepcallLoop(guildId, channelId, youtubeUrl, guild, controller) {
     const log = logger_1.default ?? logger_1;
+    let consecutiveFailures = 0;
+
     while (controller.active) {
         try {
             let conn = (0, voice_1.getVoiceConnection)(guildId, environment_1.environment.botId);
@@ -128,30 +192,43 @@ async function runSleepcallLoop(guildId, channelId, youtubeUrl, guild, controlle
                 }
             }
 
-            log.info(guildId, `Sleepcall: fetching stream URL...`);
+            log.info(guildId, "Sleepcall: fetching stream URL...");
             const streamUrl = await getYtDlpUrl(youtubeUrl);
             log.info(guildId, "Sleepcall: stream started");
             await playLiveStream(conn, streamUrl, controller);
+
+            consecutiveFailures = 0;
+
             if (controller.active) {
                 log.info(guildId, "Sleepcall: stream ended, restarting in 3s...");
             }
         } catch (err) {
-            const log2 = logger_1.default ?? logger_1;
-            log2.warn(guildId, `Sleepcall error: ${err?.message ?? err}`);
+            consecutiveFailures++;
+            log.warn(guildId, `Sleepcall error (${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}): ${err?.message ?? err}`);
+            if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                log.warn(guildId, "Sleepcall: max failures reached, stopping automatically");
+                controller.active = false;
+                if (controller.milestoneTimer) clearInterval(controller.milestoneTimer);
+                activeSleepcalls.delete(guildId);
+                break;
+            }
         }
 
         if (controller.active) {
             await sleep(3000);
         }
     }
-    const logEnd = logger_1.default ?? logger_1;
-    logEnd.info(guildId, "Sleepcall: loop stopped");
+    log.info(guildId, "Sleepcall: loop stopped");
 }
 
-function startSleepcall(guildId, channelId, youtubeUrl, guild) {
+function startSleepcall(guildId, channelId, youtubeUrl, guild, textChannelId, startTime) {
     stopSleepcall(guildId);
-    const controller = { active: true };
+    const controller = {
+        active: true,
+        lastMilestoneIndex: getLastPassedMilestoneIndex(startTime),
+    };
     activeSleepcalls.set(guildId, controller);
+    startMilestoneChecker(guildId, textChannelId, startTime, controller);
     runSleepcallLoop(guildId, channelId, youtubeUrl, guild, controller).catch((err) => {
         const log = logger_1.default ?? logger_1;
         log.error(guildId, `Sleepcall fatal: ${err}`);
@@ -162,6 +239,7 @@ function stopSleepcall(guildId) {
     const controller = activeSleepcalls.get(guildId);
     if (controller) {
         controller.active = false;
+        if (controller.milestoneTimer) clearInterval(controller.milestoneTimer);
         activeSleepcalls.delete(guildId);
     }
 }

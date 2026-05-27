@@ -4,6 +4,8 @@ export interface SleepcallState {
     guildId: string;
     channelId: string;
     youtubeUrl: string;
+    textChannelId: string;
+    startTime: number;
 }
 
 export class SleepcallRepository {

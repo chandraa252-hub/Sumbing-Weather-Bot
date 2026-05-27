@@ -5,15 +5,16 @@ const discord_js_1 = require("discord.js");
 const persistence_1 = require("../../persistence");
 const connectToChannel_1 = require("../../util/connectToChannel");
 const sleepcall_1 = require("../../services/sleepcall");
-// isSleepcallActive and stopSleepcall are used for the stop action
 const logger_1 = require("../../services/logger");
 
 async function sleepcall(interaction, _scope) {
     const guild = interaction.guild;
     const guildId = guild.id;
+    const textChannelId = interaction.channelId;
     const log = logger_1.default ?? logger_1;
 
     const action = interaction.options.getString("action") ?? "start";
+    const urlOption = interaction.options.getString("url");
 
     if (action === "stop") {
         if (!(0, sleepcall_1.isSleepcallActive)(guildId)) {
@@ -27,6 +28,18 @@ async function sleepcall(interaction, _scope) {
         return;
     }
 
+    if ((0, sleepcall_1.isSleepcallActive)(guildId) && urlOption) {
+        const saved = await persistence_1.sleepcallRepo.get(guildId);
+        if (saved) {
+            const updated = { ...saved, youtubeUrl: urlOption };
+            await persistence_1.sleepcallRepo.set(updated);
+            (0, sleepcall_1.startSleepcall)(guildId, saved.channelId, urlOption, guild, saved.textChannelId, saved.startTime);
+            log.info(guildId, `Sleepcall URL updated to: ${urlOption}`);
+            await interaction.editReply(`✅ URL sleepcall diperbarui!\n🎵 Sekarang memutar dari: ${urlOption}`);
+            return;
+        }
+    }
+
     const member = await guild.members.fetch(interaction.user.id);
     const voiceChannel = member.voice.channel;
 
@@ -34,8 +47,6 @@ async function sleepcall(interaction, _scope) {
         await interaction.editReply("❌ Kamu harus berada di voice channel terlebih dahulu.");
         return;
     }
-
-    const urlOption = interaction.options.getString("url");
 
     let youtubeUrl = urlOption ?? null;
     if (!youtubeUrl) {
@@ -50,7 +61,8 @@ async function sleepcall(interaction, _scope) {
         return;
     }
 
-    await persistence_1.sleepcallRepo.set({ guildId, channelId: voiceChannel.id, youtubeUrl });
+    const startTime = Date.now();
+    await persistence_1.sleepcallRepo.set({ guildId, channelId: voiceChannel.id, youtubeUrl, textChannelId, startTime });
 
     const conn = await (0, connectToChannel_1.connectToChannel)(voiceChannel);
     if (!conn) {
@@ -58,7 +70,7 @@ async function sleepcall(interaction, _scope) {
         return;
     }
 
-    (0, sleepcall_1.startSleepcall)(guildId, voiceChannel.id, youtubeUrl, guild);
+    (0, sleepcall_1.startSleepcall)(guildId, voiceChannel.id, youtubeUrl, guild, textChannelId, startTime);
 
     log.info(guildId, `Sleepcall started in VC:${voiceChannel.id} url:${youtubeUrl}`);
 
