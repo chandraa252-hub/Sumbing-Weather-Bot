@@ -35,10 +35,12 @@ export function getSoundPath(soundName: string): string | undefined {
 }
 
 export async function playSound(soundName: string, connection: VoiceConnection): Promise<boolean> {
-    try {
-        await entersState(connection, VoiceConnectionStatus.Ready, 10_000);
-    } catch {
-        return false;
+    if (connection.state.status !== VoiceConnectionStatus.Ready) {
+        try {
+            await entersState(connection, VoiceConnectionStatus.Ready, 3_000);
+        } catch {
+            return false;
+        }
     }
     const soundPath = getSoundPath(soundName);
     if (!soundPath) {

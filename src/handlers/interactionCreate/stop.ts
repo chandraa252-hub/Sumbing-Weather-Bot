@@ -5,8 +5,7 @@ import logger from "../../services/logger";
 import { stopTimer } from "../../services/timer";
 
 export async function stop(interaction: ChatInputCommandInteraction, scope: Scope): Promise<void> {
-    const guild = interaction.guild!;
-    const guildId = guild.id;
+    const guildId = interaction.guild!.id;
 
     if (!(await timerRepo.exists(guildId))) {
         logger.info(guildId, "Timer is not running");
@@ -16,6 +15,5 @@ export async function stop(interaction: ChatInputCommandInteraction, scope: Scop
 
     logger.info(guildId, "Stopping timer");
     await stopTimer(guildId, scope);
-
     await interaction.editReply("Timer stopped");
 }

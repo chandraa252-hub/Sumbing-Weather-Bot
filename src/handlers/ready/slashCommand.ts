@@ -7,7 +7,7 @@ import { slashCommandHashRepo } from "../../persistence";
 import logger from "../../services/logger";
 
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 10;
+const SLASH_COMMAND_REGISTRATION_VERSION = 11;
 
 export async function initCommands() {
     const commands = getSlashCommands();
@@ -106,6 +106,11 @@ export function getSlashCommands() {
             type: ApplicationCommandType.ChatInput,
             name: S.soundboard,
             description: "Open the soundboard panel",
+        },
+        {
+            type: ApplicationCommandType.ChatInput,
+            name: S.join,
+            description: "Join your voice channel and show the soundboard",
         },
         {
             type: ApplicationCommandType.ChatInput,

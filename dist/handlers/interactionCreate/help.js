@@ -14,7 +14,8 @@ async function help(interaction) {
         .setDescription(isID
         ? [
             `**/${S.start}** — Mulai timer cuaca. Masuk voice channel terlebih dahulu.`,
-            `**/${S.stop}** — Hentikan timer dan keluar dari voice.`,
+            `**/${S.join}** — Masuk ke voice channel dan tampilkan soundboard.`,
+            `**/${S.stop}** — Hentikan timer (bot tetap di channel).`,
             `**/${S.athletes.name}** — Lihat atau atur nama cuaca dan durasi rotasi.`,
             `**/${S.help}** — Tampilkan pesan bantuan ini.`,
             `**/${S.reset.name}** — Hentikan timer dan reset semua konfigurasi server.`,
@@ -26,7 +27,8 @@ async function help(interaction) {
         ].join("\n")
         : [
             `**/${S.start}** — Start the weather timer. Join a voice channel first.`,
-            `**/${S.stop}** — Stop the timer and disconnect from voice.`,
+            `**/${S.join}** — Join your voice channel and show the soundboard.`,
+            `**/${S.stop}** — Stop the timer (bot stays in channel).`,
             `**/${S.athletes.name}** — View or set weather names and rotation durations.`,
             `**/${S.help}** — Show this help message.`,
             `**/${S.reset.name}** — Stop the timer and reset all server configuration.`,

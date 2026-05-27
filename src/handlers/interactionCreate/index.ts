@@ -16,17 +16,16 @@ import { help } from "./help";
 import { skip } from "./skip";
 import { start } from "./start";
 import { stop } from "./stop";
-import { join } from "./join";
 import { language as setLanguage } from "./language";
 import { status } from "./status";
 import { leave } from "./leave";
 import { soundboard } from "./soundboard";
+import { join } from "./join";
 
 const commandsMap = {
     [SLASH_COMMAND.commands.help]: help,
     [SLASH_COMMAND.commands.start]: start,
     [SLASH_COMMAND.commands.stop]: stop,
-    [SLASH_COMMAND.commands.join]: join,
     [SLASH_COMMAND.commands.athletes.name]: athletes,
     [SLASH_COMMAND.commands.skip.name]: skip,
     [SLASH_COMMAND.commands.reset.name]: reset,
@@ -34,6 +33,7 @@ const commandsMap = {
     [SLASH_COMMAND.commands.status]: status,
     [SLASH_COMMAND.commands.leave]: leave,
     [SLASH_COMMAND.commands.soundboard]: soundboard,
+    [SLASH_COMMAND.commands.join]: join,
 };
 
 export async function handleInteractionCreate({ args: [interaction], scope }: HandlerProps<[Interaction]>) {
@@ -106,6 +106,16 @@ export async function handleInteractionCreate({ args: [interaction], scope }: Ha
 
             case BUTTON_STOP: {
                 await stopTimer(guildId, scope);
+                const conn = getVoiceConnection(guildId, environment.botId);
+                if (conn) {
+                    logger.info(guildId, `Disconnecting from VC:${conn.joinConfig.channelId}`);
+                    conn.disconnect();
+                    conn.destroy();
+                }
+                const botVoice = interaction.guild?.members.me?.voice;
+                if (botVoice?.channelId) {
+                    try { await botVoice.disconnect(); } catch {}
+                }
                 break;
             }
         }

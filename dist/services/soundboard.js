@@ -35,11 +35,13 @@ function getSoundPath(soundName) {
     return undefined;
 }
 async function playSound(soundName, connection) {
-    try {
-        await (0, voice_1.entersState)(connection, voice_1.VoiceConnectionStatus.Ready, 10_000);
-    }
-    catch {
-        return false;
+    if (connection.state.status !== voice_1.VoiceConnectionStatus.Ready) {
+        try {
+            await (0, voice_1.entersState)(connection, voice_1.VoiceConnectionStatus.Ready, 3_000);
+        }
+        catch {
+            return false;
+        }
     }
     const soundPath = getSoundPath(soundName);
     if (!soundPath) {

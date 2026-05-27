@@ -17,7 +17,6 @@ export const SLASH_COMMAND = {
         start: `start${suffix}`,
         stop: `stop${suffix}`,
         help: `help${suffix}`,
-        join: `join${suffix}`,
         status: `status${suffix}`,
         leave: `leave${suffix}`,
         athletes: {
@@ -34,6 +33,7 @@ export const SLASH_COMMAND = {
         },
         language: `language${suffix}`,
         soundboard: `soundboard${suffix}`,
+        join: `join${suffix}`,
     },
 };
 export const BUTTON_SOUNDBOARD_OPEN = "soundboard_open";
