@@ -32,6 +32,7 @@ exports.SLASH_COMMAND = {
         language: `language${suffix}`,
         soundboard: `soundboard${suffix}`,
         join: `join${suffix}`,
+        sleepcall: `sleepcall${suffix}`,
     },
 };
 exports.BUTTON_SOUNDBOARD_OPEN = "soundboard_open";

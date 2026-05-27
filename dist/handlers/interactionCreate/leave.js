@@ -9,15 +9,23 @@ const environment_1 = require("../../environment");
 const persistence_1 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 const timer_1 = require("../../services/timer");
+const sleepcall_1 = require("../../services/sleepcall");
 async function leave(interaction, scope) {
     const guild = interaction.guild;
     const guildId = guild.id;
     const config = await persistence_1.configRepo.get(guildId);
     const isID = config.languageKey === "id";
+    // Stop timer if running
     const timerRunning = await persistence_1.timerRepo.exists(guildId);
     if (timerRunning) {
         await (0, timer_1.stopTimer)(guildId, scope);
         logger_1.default.info(guildId, "Timer stopped by /leave");
+    }
+    // Stop sleepcall if running
+    if ((0, sleepcall_1.isSleepcallActive)(guildId)) {
+        (0, sleepcall_1.stopSleepcall)(guildId);
+        await persistence_1.sleepcallRepo.remove(guildId);
+        logger_1.default.info(guildId, "Sleepcall stopped by /leave");
     }
     let disconnected = false;
     const conn = (0, voice_1.getVoiceConnection)(guildId, environment_1.environment.botId);

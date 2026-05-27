@@ -14,7 +14,7 @@ const discord_1 = require("../../discord");
 const persistence_1 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 11;
+const SLASH_COMMAND_REGISTRATION_VERSION = 12;
 async function initCommands() {
     const commands = getSlashCommands();
     const commandHash = (0, object_hash_1.default)({ version: SLASH_COMMAND_REGISTRATION_VERSION, commands });
@@ -111,6 +111,19 @@ function getSlashCommands() {
             type: discord_js_1.ApplicationCommandType.ChatInput,
             name: S.join,
             description: "Join your voice channel and show the soundboard",
+        },
+        {
+            type: discord_js_1.ApplicationCommandType.ChatInput,
+            name: S.sleepcall,
+            description: "Bot tetap di VC 24/7 sambil memutar live music YouTube",
+            options: [
+                {
+                    type: discord_js_1.ApplicationCommandOptionType.String,
+                    name: "url",
+                    description: "Link YouTube Live (opsional jika sudah pernah diset)",
+                    required: false,
+                },
+            ],
         },
         {
             type: discord_js_1.ApplicationCommandType.ChatInput,

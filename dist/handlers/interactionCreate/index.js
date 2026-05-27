@@ -25,6 +25,7 @@ const status_1 = require("./status");
 const leave_1 = require("./leave");
 const soundboard_3 = require("./soundboard");
 const join_1 = require("./join");
+const sleepcall_1 = require("./sleepcall");
 const commandsMap = {
     [constants_1.SLASH_COMMAND.commands.help]: help_1.help,
     [constants_1.SLASH_COMMAND.commands.start]: start_1.start,
@@ -37,6 +38,7 @@ const commandsMap = {
     [constants_1.SLASH_COMMAND.commands.leave]: leave_1.leave,
     [constants_1.SLASH_COMMAND.commands.soundboard]: soundboard_3.soundboard,
     [constants_1.SLASH_COMMAND.commands.join]: join_1.join,
+    [constants_1.SLASH_COMMAND.commands.sleepcall]: sleepcall_1.sleepcall,
 };
 async function handleInteractionCreate({ args: [interaction], scope }) {
     if (interaction.isButton() && interaction.inGuild()) {

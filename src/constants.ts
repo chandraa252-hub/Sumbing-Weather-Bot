@@ -34,6 +34,7 @@ export const SLASH_COMMAND = {
         language: `language${suffix}`,
         soundboard: `soundboard${suffix}`,
         join: `join${suffix}`,
+        sleepcall: `sleepcall${suffix}`,
     },
 };
 export const BUTTON_SOUNDBOARD_OPEN = "soundboard_open";
