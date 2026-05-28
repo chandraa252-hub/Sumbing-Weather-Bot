@@ -76,28 +76,35 @@ Shows a list of available commands, project links, and developer information.
 Example output:
 
 ```bash
-/start — Start the weather timer. Join a voice channel first.
-/stop — Stop the timer and disconnect from voice.
+Help
+🌦️ Weather Timer
+/weather start — Start the weather timer. Join a voice channel first.
+/weather stop — Stop the timer (bot stays in channel).
+/weather skip — Skip to the next weather in the rotation.
+/weather reset — Stop the timer and reset all server configuration.
+/weather status — Show current timer status.
 /weathers — View or set weather names and rotation durations.
-/help — Show this help message.
-/reset — Stop the timer and reset all server configuration.
-/skip — Skip to the next weather in the rotation.
-/status — Show current timer status.
+
+🎵 Music
+/music play url: — Add a YouTube URL to the queue and start playing.
+/music skip — Skip the current song to the next in queue.
+/music stop — Stop music and clear the queue.
+/sleepcall — Keep bot in VC 24/7 while playing YouTube live music.
+
+🔧 Other
+/join — Join your voice channel and show the soundboard.
+/soundboard — Open the soundboard panel to play audio.
 /leave — Force disconnect bot from voice channel.
 /language — Set the announcement language.
-
+/help — Show this help message.
 Discord Server (Questions/Feedback)
 https://discord.gg/jB3J3xfmGf
-
 Full Documentation
 https://github.com/chandraa252-hub/Sumbing-Weather-Timer
-
 Web App
 https://github.com/chandraa252-hub
-
 Support this project
 https://discord.com/users/762372166733529088
-
 Made by Stephanus Chandra Wijaya
 ```
 
