@@ -18,6 +18,7 @@ import { client } from "../discord";
 const ffmpegPath: string = (ffmpegStatic as any).default ?? ffmpegStatic;
 
 const MAX_CONSECUTIVE_FAILURES = 5;
+const DUCK_VOLUME = 0.15;
 
 export const MILESTONES: { seconds: number; label: string }[] = [
     { seconds: 86400,     label: "1 hari" },
@@ -49,6 +50,8 @@ interface SleepcallController {
     active: boolean;
     lastMilestoneIndex: number;
     milestoneTimer?: NodeJS.Timeout;
+    volumeTransformer?: any;
+    duckCount: number;
 }
 
 const activeSleepcalls = new Map<string, SleepcallController>();
@@ -194,13 +197,21 @@ function playLiveStream(
         const subscription = conn!.subscribe(player);
         const resource = createAudioResource((ffmpeg.stdout as any), {
             inputType: StreamType.Raw,
+            inlineVolume: true,
         });
+
+        controller.volumeTransformer = resource.volume;
+        if (controller.duckCount > 0) {
+            resource.volume?.setVolume(DUCK_VOLUME);
+        }
+
         player.play(resource);
 
         let settled = false;
         const cleanup = () => {
             if (settled) return;
             settled = true;
+            controller.volumeTransformer = undefined;
             try { subscription?.unsubscribe(); } catch {}
             try { player.stop(); } catch {}
             try { ffmpeg.kill("SIGKILL"); } catch {}
@@ -305,6 +316,7 @@ export function startSleepcall(
     const controller: SleepcallController = {
         active: true,
         lastMilestoneIndex: getLastPassedMilestoneIndex(startTime),
+        duckCount: 0,
     };
     activeSleepcalls.set(guildId, controller);
     startMilestoneChecker(guildId, textChannelId, startTime, controller);
@@ -324,4 +336,20 @@ export function stopSleepcall(guildId: string): void {
 
 export function isSleepcallActive(guildId: string): boolean {
     return activeSleepcalls.has(guildId);
+}
+
+export function duckSleepcall(guildId: string): void {
+    const controller = activeSleepcalls.get(guildId);
+    if (!controller) return;
+    controller.duckCount++;
+    controller.volumeTransformer?.setVolume(DUCK_VOLUME);
+}
+
+export function unduckSleepcall(guildId: string): void {
+    const controller = activeSleepcalls.get(guildId);
+    if (!controller) return;
+    controller.duckCount = Math.max(0, controller.duckCount - 1);
+    if (controller.duckCount === 0) {
+        controller.volumeTransformer?.setVolume(1);
+    }
 }

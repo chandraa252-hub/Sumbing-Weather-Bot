@@ -5,6 +5,7 @@ import { LANGUAGES } from "./languages";
 import { LanguageKey, Locale } from "./languages/types";
 import logger from "./services/logger";
 import { download } from "./util/download";
+import { duckSleepcall, unduckSleepcall, isSleepcallActive } from "./services/sleepcall";
 
 export async function speak(text: string, locale: Locale, connection: VoiceConnection): Promise<void> {
     if (connection.state.status !== VoiceConnectionStatus.Ready) {
@@ -15,6 +16,11 @@ export async function speak(text: string, locale: Locale, connection: VoiceConne
         logger.info(connection.joinConfig.guildId, `Speak: "${text}"`);
     }
 
+    const guildId = connection.joinConfig.guildId;
+    const wasActive = isSleepcallActive(guildId);
+    if (wasActive) duckSleepcall(guildId);
+
+    try {
     await new Promise<void>(async (resolve, reject) => {
         const url = getAudioUrl(text, {
             lang: locale,
@@ -43,6 +49,9 @@ export async function speak(text: string, locale: Locale, connection: VoiceConne
             resolve();
         });
     });
+    } finally {
+        if (wasActive) unduckSleepcall(guildId);
+    }
 }
 
 export async function speakCommand(

@@ -10,6 +10,7 @@ const voice_1 = require("@discordjs/voice");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const logger_1 = __importDefault(require("./logger"));
+const sleepcall_1 = require("./sleepcall");
 const SOUNDS_DIR = path_1.default.join(process.cwd(), "sounds");
 const SUPPORTED_EXTENSIONS = [".mp3", ".ogg", ".wav"];
 function toTitleCase(str) {
@@ -49,6 +50,10 @@ async function playSound(soundName, connection) {
         return false;
     }
     logger_1.default.info(connection.joinConfig.guildId, `Playing sound: ${soundName}`);
+    const guildId = connection.joinConfig.guildId;
+    const wasActive = (0, sleepcall_1.isSleepcallActive)(guildId);
+    if (wasActive) (0, sleepcall_1.duckSleepcall)(guildId);
+    try {
     await new Promise((resolve, reject) => {
         const player = (0, voice_1.createAudioPlayer)();
         const subscription = connection.subscribe(player);
@@ -69,5 +74,8 @@ async function playSound(soundName, connection) {
             resolve();
         });
     });
+    } finally {
+        if (wasActive) (0, sleepcall_1.unduckSleepcall)(guildId);
+    }
     return true;
 }

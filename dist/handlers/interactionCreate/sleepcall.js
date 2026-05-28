@@ -62,7 +62,10 @@ async function sleepcall(interaction, _scope) {
             await persistence_1.sleepcallRepo.set(updated);
             (0, sleepcall_1.startSleepcall)(guildId, saved.channelId, urlOption, guild, saved.textChannelId, saved.startTime);
             log.info(guildId, `Sleepcall URL updated to: ${urlOption}`);
-            await interaction.editReply(`✅ URL sleepcall diperbarui!\n🎵 Sekarang memutar: **${videoTitle}**`);
+            const elapsed = Date.now() - saved.startTime;
+            await interaction.editReply(
+                `✅ URL sleepcall diperbarui!\n🎵 Sekarang memutar: **${videoTitle}**\n🔊 Voice sudah berjalan: **${(0, sleepcall_1.formatDuration)(elapsed)}**`
+            );
             return;
         }
     }
@@ -115,9 +118,12 @@ async function sleepcall(interaction, _scope) {
         .setDescription(
             [
                 `Bot akan tetap di **${voiceChannel.name}** selama 24/7.`,
-                `🎵 Memutar: **${videoTitle}**`,
+                `**${voiceChannel.name}** sudah berjalan selama baru dimulai`,
+                `🎵 Memutar music audio dari YouTube.`,
                 ``,
-                `Gunakan \`/sleepcall action:stop\` atau \`/leave\` untuk menghentikan.`,
+                `Judul : **${videoTitle}**`,
+                ``,
+                `Gunakan \`/sleepcall action:stop\` atau \`/leave\` untuk mengeluarkan bot.`,
             ].join("\n")
         )
         .setColor(0x5865f2);

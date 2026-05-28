@@ -2,6 +2,7 @@ import { createAudioPlayer, createAudioResource, entersState, VoiceConnection, V
 import path from "path";
 import fs from "fs";
 import logger from "./logger";
+import { duckSleepcall, unduckSleepcall, isSleepcallActive } from "./sleepcall";
 
 const SOUNDS_DIR = path.join(process.cwd(), "sounds");
 const SUPPORTED_EXTENSIONS = [".mp3", ".ogg", ".wav"];
@@ -48,6 +49,10 @@ export async function playSound(soundName: string, connection: VoiceConnection):
         return false;
     }
     logger.info(connection.joinConfig.guildId, `Playing sound: ${soundName}`);
+    const guildId = connection.joinConfig.guildId;
+    const wasActive = isSleepcallActive(guildId);
+    if (wasActive) duckSleepcall(guildId);
+    try {
     await new Promise<void>((resolve, reject) => {
         const player = createAudioPlayer();
         const subscription = connection.subscribe(player);
@@ -68,5 +73,8 @@ export async function playSound(soundName: string, connection: VoiceConnection):
             resolve();
         });
     });
+    } finally {
+        if (wasActive) unduckSleepcall(guildId);
+    }
     return true;
 }
