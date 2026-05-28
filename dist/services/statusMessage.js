@@ -93,13 +93,13 @@ function buildControlsSection(config) {
         return [
             `-# Kontrol:`,
             `-# ${emojis_1.EMOJI_SKIP} Ganti saat cuaca berubah ke kondisi cerah atau kemarau`,
-            `-# ${emojis_1.EMOJI_STOP} Hentikan timer cuaca atau gunakan \`/${constants_1.SLASH_COMMAND.commands.stop}\``,
+            `-# ${emojis_1.EMOJI_STOP} Hentikan timer cuaca atau gunakan \`/${constants_1.SLASH_COMMAND.commands.weather} stop\``,
         ].join("\n");
     }
     return [
         `-# Controls:`,
         `-# ${emojis_1.EMOJI_SKIP} Skip to advance when weather changes to normal or dry conditions`,
-        `-# ${emojis_1.EMOJI_STOP} Stop the weather timer or use \`/${constants_1.SLASH_COMMAND.commands.stop}\``,
+        `-# ${emojis_1.EMOJI_STOP} Stop the weather timer or use \`/${constants_1.SLASH_COMMAND.commands.weather} stop\``,
     ].join("\n");
 }
 function buildStatusDescription(config, timer) {

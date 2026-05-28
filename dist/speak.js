@@ -12,6 +12,7 @@ const languages_1 = require("./languages");
 const logger_1 = __importDefault(require("./services/logger"));
 const download_1 = require("./util/download");
 const sleepcall_1 = require("./services/sleepcall");
+const musicQueue_1 = require("./services/musicQueue");
 async function speak(text, locale, connection) {
     if (connection.state.status !== voice_1.VoiceConnectionStatus.Ready) {
         return;
@@ -20,8 +21,10 @@ async function speak(text, locale, connection) {
         logger_1.default.info(connection.joinConfig.guildId, `Speak: "${text}"`);
     }
     const guildId = connection.joinConfig.guildId;
-    const wasActive = (0, sleepcall_1.isSleepcallActive)(guildId);
-    if (wasActive) (0, sleepcall_1.duckSleepcall)(guildId);
+    const wasSleepcallActive = (0, sleepcall_1.isSleepcallActive)(guildId);
+    const wasMusicActive = (0, musicQueue_1.isMusicActive)(guildId);
+    if (wasSleepcallActive) (0, sleepcall_1.duckSleepcall)(guildId);
+    if (wasMusicActive) (0, musicQueue_1.duckMusic)(guildId);
     try {
     await new Promise(async (resolve, reject) => {
         const url = (0, google_tts_api_1.getAudioUrl)(text, {
@@ -47,7 +50,8 @@ async function speak(text, locale, connection) {
         });
     });
     } finally {
-        if (wasActive) (0, sleepcall_1.unduckSleepcall)(guildId);
+        if (wasSleepcallActive) (0, sleepcall_1.unduckSleepcall)(guildId);
+        if (wasMusicActive) (0, musicQueue_1.unduckMusic)(guildId);
     }
 }
 async function speakCommand(command, args, connection, languageKey) {

@@ -103,13 +103,13 @@ function buildControlsSection(config: Config): string {
         return [
             `-# Kontrol:`,
             `-# ${EMOJI_SKIP} Ganti saat cuaca berubah ke kondisi cerah atau kemarau`,
-            `-# ${EMOJI_STOP} Hentikan timer cuaca atau gunakan \`/${SLASH_COMMAND.commands.stop}\``,
+            `-# ${EMOJI_STOP} Hentikan timer cuaca atau gunakan \`/${SLASH_COMMAND.commands.weather} stop\``,
         ].join("\n");
     }
     return [
         `-# Controls:`,
         `-# ${EMOJI_SKIP} Skip to advance when weather changes to normal or dry conditions`,
-        `-# ${EMOJI_STOP} Stop the weather timer or use \`/${SLASH_COMMAND.commands.stop}\``,
+        `-# ${EMOJI_STOP} Stop the weather timer or use \`/${SLASH_COMMAND.commands.weather} stop\``,
     ].join("\n");
 }
 

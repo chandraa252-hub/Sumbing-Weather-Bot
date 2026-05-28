@@ -1,5 +1,4 @@
 import type { ChatInputCommandInteraction } from "discord.js";
-import { SLASH_COMMAND } from "../../constants";
 import { timerRepo } from "../../persistence";
 import { updateStatusMessage } from "../../services/statusMessage";
 import { skipCurrentAthlete } from "../../services/timer";
@@ -8,7 +7,7 @@ export async function skip(interaction: ChatInputCommandInteraction): Promise<vo
     const guildId = interaction.guild!.id;
 
     if (!(await timerRepo.exists(guildId))) {
-        await interaction.editReply(`Start the timer first using \`/${SLASH_COMMAND.name} start\``);
+        await interaction.editReply("Mulai timer terlebih dahulu menggunakan `/weather start`");
         return;
     }
 

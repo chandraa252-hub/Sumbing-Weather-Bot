@@ -14,7 +14,7 @@ const discord_1 = require("../../discord");
 const persistence_1 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 14;
+const SLASH_COMMAND_REGISTRATION_VERSION = 15;
 async function initCommands() {
     const commands = getSlashCommands();
     const commandHash = (0, object_hash_1.default)({ version: SLASH_COMMAND_REGISTRATION_VERSION, commands });
@@ -51,33 +51,42 @@ function getSlashCommands() {
     return [
         {
             type: discord_js_1.ApplicationCommandType.ChatInput,
-            name: S.start,
-            description: "Start the weather timer",
+            name: S.weather,
+            description: "Kelola timer cuaca rotasi",
+            options: [
+                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "start",  description: "Mulai timer cuaca. Masuk voice channel terlebih dahulu." },
+                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "stop",   description: "Hentikan timer (bot tetap di channel)." },
+                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "skip",   description: "Lewati ke cuaca berikutnya dalam rotasi." },
+                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "reset",  description: "Hentikan timer dan reset semua konfigurasi server." },
+                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "status", description: "Tampilkan status timer cuaca saat ini." },
+            ],
         },
         {
             type: discord_js_1.ApplicationCommandType.ChatInput,
-            name: S.stop,
-            description: "Stop the weather timer",
-        },
-        {
-            type: discord_js_1.ApplicationCommandType.ChatInput,
-            name: S.skip.name,
-            description: "Skip the current weather",
-        },
-        {
-            type: discord_js_1.ApplicationCommandType.ChatInput,
-            name: S.reset.name,
-            description: "Stop the timer and reset all configuration",
+            name: S.music,
+            description: "Putar musik YouTube di voice channel",
+            options: [
+                {
+                    type: discord_js_1.ApplicationCommandOptionType.Subcommand,
+                    name: "play",
+                    description: "Tambahkan URL YouTube ke antrian dan mulai putar.",
+                    options: [
+                        {
+                            type: discord_js_1.ApplicationCommandOptionType.String,
+                            name: "url",
+                            description: "Link YouTube yang akan diputar",
+                            required: true,
+                        },
+                    ],
+                },
+                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "stop", description: "Hentikan musik dan bersihkan antrian." },
+                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "skip", description: "Lewati lagu saat ini ke lagu berikutnya dalam antrian." },
+            ],
         },
         {
             type: discord_js_1.ApplicationCommandType.ChatInput,
             name: S.help,
             description: "Show help",
-        },
-        {
-            type: discord_js_1.ApplicationCommandType.ChatInput,
-            name: S.status,
-            description: "Show current timer status",
         },
         {
             type: discord_js_1.ApplicationCommandType.ChatInput,

@@ -7,7 +7,7 @@ import { slashCommandHashRepo } from "../../persistence";
 import logger from "../../services/logger";
 
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 14;
+const SLASH_COMMAND_REGISTRATION_VERSION = 15;
 
 export async function initCommands() {
     const commands = getSlashCommands();
@@ -43,7 +43,9 @@ async function clearGlobalCommands() {
 
 async function syncAllGuildCommands() {
     const commands = getSlashCommands();
-    await Promise.all(client.guilds.cache.map((guild) => client.application!.commands.set(commands as any, guild.id)));
+    await Promise.all(
+        client.guilds.cache.map((guild) => client.application!.commands.set(commands as any, guild.id))
+    );
 }
 
 export function getSlashCommands() {
@@ -51,33 +53,70 @@ export function getSlashCommands() {
     return [
         {
             type: ApplicationCommandType.ChatInput,
-            name: S.start,
-            description: "Start the weather timer",
+            name: S.weather,
+            description: "Kelola timer cuaca rotasi",
+            options: [
+                {
+                    type: ApplicationCommandOptionType.Subcommand,
+                    name: "start",
+                    description: "Mulai timer cuaca. Masuk voice channel terlebih dahulu.",
+                },
+                {
+                    type: ApplicationCommandOptionType.Subcommand,
+                    name: "stop",
+                    description: "Hentikan timer (bot tetap di channel).",
+                },
+                {
+                    type: ApplicationCommandOptionType.Subcommand,
+                    name: "skip",
+                    description: "Lewati ke cuaca berikutnya dalam rotasi.",
+                },
+                {
+                    type: ApplicationCommandOptionType.Subcommand,
+                    name: "reset",
+                    description: "Hentikan timer dan reset semua konfigurasi server.",
+                },
+                {
+                    type: ApplicationCommandOptionType.Subcommand,
+                    name: "status",
+                    description: "Tampilkan status timer cuaca saat ini.",
+                },
+            ],
         },
         {
             type: ApplicationCommandType.ChatInput,
-            name: S.stop,
-            description: "Stop the weather timer",
-        },
-        {
-            type: ApplicationCommandType.ChatInput,
-            name: S.skip.name,
-            description: "Skip the current weather",
-        },
-        {
-            type: ApplicationCommandType.ChatInput,
-            name: S.reset.name,
-            description: "Stop the timer and reset all configuration",
+            name: S.music,
+            description: "Putar musik YouTube di voice channel",
+            options: [
+                {
+                    type: ApplicationCommandOptionType.Subcommand,
+                    name: "play",
+                    description: "Tambahkan URL YouTube ke antrian dan mulai putar.",
+                    options: [
+                        {
+                            type: ApplicationCommandOptionType.String,
+                            name: "url",
+                            description: "Link YouTube yang akan diputar",
+                            required: true,
+                        },
+                    ],
+                },
+                {
+                    type: ApplicationCommandOptionType.Subcommand,
+                    name: "stop",
+                    description: "Hentikan musik dan bersihkan antrian.",
+                },
+                {
+                    type: ApplicationCommandOptionType.Subcommand,
+                    name: "skip",
+                    description: "Lewati lagu saat ini ke lagu berikutnya dalam antrian.",
+                },
+            ],
         },
         {
             type: ApplicationCommandType.ChatInput,
             name: S.help,
             description: "Show help",
-        },
-        {
-            type: ApplicationCommandType.ChatInput,
-            name: S.status,
-            description: "Show current timer status",
         },
         {
             type: ApplicationCommandType.ChatInput,

@@ -13,28 +13,23 @@ const statusMessage_1 = require("../../services/statusMessage");
 const timer_1 = require("../../services/timer");
 const connectToChannel_1 = require("../../util/connectToChannel");
 const soundboard_1 = require("../../services/soundboard");
+const musicQueue_1 = require("../../services/musicQueue");
 const soundboard_2 = require("./soundboard");
-const reset_1 = require("./reset");
 const athletes_1 = require("./athletes");
 const help_1 = require("./help");
-const skip_1 = require("./skip");
-const start_1 = require("./start");
-const stop_1 = require("./stop");
+const weather_1 = require("./weather");
+const music_1 = require("./music");
 const language_1 = require("./language");
-const status_1 = require("./status");
 const leave_1 = require("./leave");
 const soundboard_3 = require("./soundboard");
 const join_1 = require("./join");
 const sleepcall_1 = require("./sleepcall");
 const commandsMap = {
     [constants_1.SLASH_COMMAND.commands.help]: help_1.help,
-    [constants_1.SLASH_COMMAND.commands.start]: start_1.start,
-    [constants_1.SLASH_COMMAND.commands.stop]: stop_1.stop,
+    [constants_1.SLASH_COMMAND.commands.weather]: weather_1.weather,
+    [constants_1.SLASH_COMMAND.commands.music]: music_1.music,
     [constants_1.SLASH_COMMAND.commands.athletes.name]: athletes_1.athletes,
-    [constants_1.SLASH_COMMAND.commands.skip.name]: skip_1.skip,
-    [constants_1.SLASH_COMMAND.commands.reset.name]: reset_1.reset,
     [constants_1.SLASH_COMMAND.commands.language]: language_1.language,
-    [constants_1.SLASH_COMMAND.commands.status]: status_1.status,
     [constants_1.SLASH_COMMAND.commands.leave]: leave_1.leave,
     [constants_1.SLASH_COMMAND.commands.soundboard]: soundboard_3.soundboard,
     [constants_1.SLASH_COMMAND.commands.join]: join_1.join,
@@ -48,7 +43,6 @@ async function handleInteractionCreate({ args: [interaction], scope }) {
         if (customId === constants_1.BUTTON_SOUNDBOARD_OPEN) {
             await interaction.deferUpdate();
             const config = await persistence_1.configRepo.get(guildId);
-            // Pre-connect to VC in background so connection is ready before sound button pressed
             const member = interaction.member;
             const voiceChannelId = member?.voice?.channelId;
             if (voiceChannelId) {
@@ -91,6 +85,26 @@ async function handleInteractionCreate({ args: [interaction], scope }) {
             const played = await (0, soundboard_1.playSound)(soundName, conn);
             if (!played) {
                 await interaction.followUp({ content: `❌ Audio tidak ditemukan: \`${soundName}\``, ephemeral: true });
+            }
+            return;
+        }
+        if (customId === constants_1.BUTTON_MUSIC_SKIP) {
+            await interaction.deferUpdate();
+            const skipped = (0, musicQueue_1.skipCurrentSong)(guildId);
+            if (skipped) {
+                await interaction.followUp({ content: "⏭ Lagu dilewati.", ephemeral: true });
+            } else {
+                await interaction.followUp({ content: "ℹ️ Tidak ada musik yang sedang diputar.", ephemeral: true });
+            }
+            return;
+        }
+        if (customId === constants_1.BUTTON_MUSIC_STOP) {
+            await interaction.deferUpdate();
+            const stopped = (0, musicQueue_1.stopMusicQueue)(guildId);
+            if (stopped) {
+                await interaction.followUp({ content: "⏹ Musik dihentikan.", ephemeral: true });
+            } else {
+                await interaction.followUp({ content: "ℹ️ Tidak ada musik yang sedang diputar.", ephemeral: true });
             }
             return;
         }

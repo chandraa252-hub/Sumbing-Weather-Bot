@@ -126,7 +126,7 @@ function getYtDlpTitle(youtubeUrl) {
                 "--no-warnings",
                 youtubeUrl,
             ],
-            { timeout: 30000 },
+            { timeout: 30000, windowsHide: true },
             (err, stdout) => {
                 if (err) return reject(err);
                 const title = stdout.trim().split("\n")[0];
@@ -149,7 +149,7 @@ function getYtDlpUrl(youtubeUrl) {
                 "--no-warnings",
                 youtubeUrl,
             ],
-            { timeout: 30000 },
+            { timeout: 30000, windowsHide: true },
             (err, stdout) => {
                 if (err) return reject(err);
                 const url = stdout.trim().split("\n")[0];
@@ -175,7 +175,7 @@ function playLiveStream(conn, streamUrl, controller) {
                 "-ac", "2",
                 "pipe:1",
             ],
-            { stdio: ["ignore", "pipe", "ignore"] }
+            { stdio: ["ignore", "pipe", "ignore"], windowsHide: true }
         );
 
         const player = (0, voice_1.createAudioPlayer)();

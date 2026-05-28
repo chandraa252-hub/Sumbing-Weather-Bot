@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.start = start;
 const discord_js_1 = require("discord.js");
-const constants_1 = require("../../constants");
 const persistence_1 = require("../../persistence");
 const persistence_2 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
@@ -40,7 +39,7 @@ async function start(interaction, scope) {
     }
     const member = await resolveGuildMember(guild, interaction);
     if (!member?.voice.channel) {
-        await interaction.editReply(`I don't know which voice channel to join. Join a voice channel and run \`/${constants_1.SLASH_COMMAND.commands.start}\` again.`);
+        await interaction.editReply(`I don't know which voice channel to join. Join a voice channel and run \`/weather start\` again.`);
         return;
     }
     const channel = interaction.channel;

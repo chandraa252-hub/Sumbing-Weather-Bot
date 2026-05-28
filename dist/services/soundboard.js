@@ -11,6 +11,7 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const logger_1 = __importDefault(require("./logger"));
 const sleepcall_1 = require("./sleepcall");
+const musicQueue_1 = require("./musicQueue");
 const SOUNDS_DIR = path_1.default.join(process.cwd(), "sounds");
 const SUPPORTED_EXTENSIONS = [".mp3", ".ogg", ".wav"];
 function toTitleCase(str) {
@@ -51,8 +52,10 @@ async function playSound(soundName, connection) {
     }
     logger_1.default.info(connection.joinConfig.guildId, `Playing sound: ${soundName}`);
     const guildId = connection.joinConfig.guildId;
-    const wasActive = (0, sleepcall_1.isSleepcallActive)(guildId);
-    if (wasActive) (0, sleepcall_1.duckSleepcall)(guildId);
+    const wasSleepcallActive = (0, sleepcall_1.isSleepcallActive)(guildId);
+    const wasMusicActive = (0, musicQueue_1.isMusicActive)(guildId);
+    if (wasSleepcallActive) (0, sleepcall_1.duckSleepcall)(guildId);
+    if (wasMusicActive) (0, musicQueue_1.duckMusic)(guildId);
     try {
     await new Promise((resolve, reject) => {
         const player = (0, voice_1.createAudioPlayer)();
@@ -75,7 +78,8 @@ async function playSound(soundName, connection) {
         });
     });
     } finally {
-        if (wasActive) (0, sleepcall_1.unduckSleepcall)(guildId);
+        if (wasSleepcallActive) (0, sleepcall_1.unduckSleepcall)(guildId);
+        if (wasMusicActive) (0, musicQueue_1.unduckMusic)(guildId);
     }
     return true;
 }

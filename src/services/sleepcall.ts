@@ -137,7 +137,7 @@ export function getYtDlpTitle(youtubeUrl: string): Promise<string> {
                 "--no-warnings",
                 youtubeUrl,
             ],
-            { timeout: 30000 },
+            { timeout: 30000, windowsHide: true },
             (err, stdout) => {
                 if (err) return reject(err);
                 const title = stdout.trim().split("\n")[0];
@@ -160,7 +160,7 @@ function getYtDlpUrl(youtubeUrl: string): Promise<string> {
                 "--no-warnings",
                 youtubeUrl,
             ],
-            { timeout: 30000 },
+            { timeout: 30000, windowsHide: true },
             (err, stdout) => {
                 if (err) return reject(err);
                 const url = stdout.trim().split("\n")[0];
@@ -190,7 +190,7 @@ function playLiveStream(
                 "-ac", "2",
                 "pipe:1",
             ],
-            { stdio: ["ignore", "pipe", "ignore"] }
+            { stdio: ["ignore", "pipe", "ignore"], windowsHide: true }
         );
 
         const player = createAudioPlayer();
