@@ -23,11 +23,15 @@ import { duckSleepcall, unduckSleepcall, isSleepcallActive } from "./sleepcall";
 import { BUTTON_MUSIC_SKIP, BUTTON_MUSIC_STOP } from "../constants";
 
 const ffmpegPath = (ffmpegStatic as any).default ?? ffmpegStatic;
+const MAX_STREAM_RETRIES = 3;
 
 export interface QueueItem {
     url: string;
     title: string;
 }
+
+/** How playStream ended. */
+type PlayEndReason = "user" | "natural" | "error";
 
 interface SongController {
     active: boolean;
@@ -45,6 +49,13 @@ interface MusicState {
     duckCount: number;
     statusChannelId?: string;
     statusMessageId?: string;
+    /** True when TTS/soundboard is interrupting the current song. */
+    interrupted: boolean;
+    /** Resolves when TTS/soundboard finishes so music can resume. */
+    resumePromise: Promise<void> | null;
+    resumeResolve: (() => void) | null;
+    /** How many consecutive stream errors for the current song. */
+    streamRetries: number;
 }
 
 const activeQueues = new Map<string, MusicState>();
@@ -171,7 +182,7 @@ function playStream(
     streamUrl: string,
     songCtrl: SongController,
     state: MusicState
-): Promise<void> {
+): Promise<PlayEndReason> {
     return new Promise((resolve) => {
         const ffmpeg = spawn(
             ffmpegPath as string,
@@ -202,25 +213,34 @@ function playStream(
         player.play(resource);
 
         let settled = false;
-        const cleanup = () => {
+        const cleanup = (reason: PlayEndReason) => {
             if (settled) return;
             settled = true;
             state.volumeTransformer = undefined;
             try { subscription?.unsubscribe(); } catch {}
             try { player.stop(); } catch {}
             try { ffmpeg.kill("SIGKILL"); } catch {}
+            resolve(reason);
         };
 
         const checkInterval = setInterval(() => {
             if (!songCtrl.active || !state.active) {
                 clearInterval(checkInterval);
-                cleanup();
-                resolve();
+                cleanup("user");
             }
-        }, 1000);
+        }, 500);
 
-        player.on("error", () => { clearInterval(checkInterval); cleanup(); resolve(); });
-        ffmpeg.on("close", () => { clearInterval(checkInterval); cleanup(); resolve(); });
+        player.on("error", (err: any) => {
+            logger.warn(state.guildId, `MusicQueue player error: ${err?.message ?? err}`);
+            clearInterval(checkInterval);
+            cleanup("error");
+        });
+
+        ffmpeg.on("close", (code: number | null) => {
+            clearInterval(checkInterval);
+            // code 0 = natural end, non-zero or null = stream error
+            cleanup(code === 0 ? "natural" : "error");
+        });
     });
 }
 
@@ -237,6 +257,8 @@ async function runQueue(guildId: string): Promise<void> {
         state.songController = songCtrl;
 
         await sendOrUpdateStatusMessage(state);
+
+        let reason: PlayEndReason = "error";
 
         try {
             let conn = getVoiceConnection(guildId, environment.botId as any);
@@ -257,19 +279,44 @@ async function runQueue(guildId: string): Promise<void> {
                 try {
                     await entersState(conn, VoiceConnectionStatus.Ready, 10_000);
                 } catch {
-                    state.currentIndex++;
+                    // Connection not ready, retry after delay
+                    await sleep(3000);
                     continue;
                 }
             }
 
-            logger.info(guildId, `MusicQueue: [${state.currentIndex + 1}/${state.queue.length}] "${item.title}"`);
+            logger.info(guildId, `MusicQueue: [${state.currentIndex + 1}/${state.queue.length}] "${item.title}" (attempt ${state.streamRetries + 1})`);
             const streamUrl = await getYtDlpStreamUrl(item.url);
-            await playStream(conn as any, streamUrl, songCtrl, state);
+            reason = await playStream(conn as any, streamUrl, songCtrl, state);
         } catch (err) {
             logger.warn(guildId, `MusicQueue: error on "${item.title}": ${err}`);
+            reason = "error";
         }
 
         if (!state.active) break;
+
+        // TTS/soundboard interrupted this song — wait for it to finish, then replay
+        if (state.interrupted) {
+            logger.info(guildId, `MusicQueue: interrupted by TTS/soundboard, will resume "${item.title}"`);
+            if (state.resumePromise) await state.resumePromise;
+            state.interrupted = false;
+            state.resumePromise = null;
+            state.resumeResolve = null;
+            state.streamRetries = 0;
+            await sleep(300);
+            continue; // Restart current song
+        }
+
+        // Stream dropped due to network/server error — retry
+        if (reason === "error" && state.streamRetries < MAX_STREAM_RETRIES) {
+            state.streamRetries++;
+            logger.warn(guildId, `MusicQueue: stream error, retrying "${item.title}" (${state.streamRetries}/${MAX_STREAM_RETRIES})`);
+            await sleep(2000);
+            continue; // Retry current song
+        }
+
+        // Song ended (naturally, skipped by user, or max retries reached)
+        state.streamRetries = 0;
         state.currentIndex++;
         await sleep(500);
     }
@@ -303,6 +350,10 @@ export function addToQueue(
             active: false,
             songController: { active: false },
             duckCount: 0,
+            interrupted: false,
+            resumePromise: null,
+            resumeResolve: null,
+            streamRetries: 0,
         };
         activeQueues.set(guildId, state);
     }
@@ -325,6 +376,8 @@ export function addToQueue(
 export function skipCurrentSong(guildId: string): boolean {
     const state = activeQueues.get(guildId);
     if (!state || !state.active) return false;
+    // Make sure this is not treated as a TTS interrupt
+    state.interrupted = false;
     state.songController.active = false;
     return true;
 }
@@ -333,8 +386,43 @@ export function stopMusicQueue(guildId: string): boolean {
     const state = activeQueues.get(guildId);
     if (!state) return false;
     state.active = false;
+    state.interrupted = false;
     state.songController.active = false;
+    // Unblock any waiting resumePromise
+    const resolve = state.resumeResolve;
+    state.resumeResolve = null;
+    state.resumePromise = null;
+    resolve?.();
     return true;
+}
+
+/**
+ * Called by TTS/soundboard BEFORE they start playing.
+ * Pauses the current music song so it doesn't fight for the voice connection.
+ * Music will restart the current song once resumeMusicAfterInterrupt() is called.
+ */
+export function pauseMusicForInterrupt(guildId: string): boolean {
+    const state = activeQueues.get(guildId);
+    if (!state?.active) return false;
+    state.interrupted = true;
+    state.resumePromise = new Promise<void>((resolve) => {
+        state.resumeResolve = resolve;
+    });
+    state.songController.active = false; // Signal playStream to stop
+    return true;
+}
+
+/**
+ * Called by TTS/soundboard AFTER they finish playing.
+ * Signals the music queue to resume playing the current song.
+ */
+export function resumeMusicAfterInterrupt(guildId: string): void {
+    const state = activeQueues.get(guildId);
+    if (!state) return;
+    const resolve = state.resumeResolve;
+    state.resumeResolve = null;
+    state.resumePromise = null;
+    resolve?.();
 }
 
 export function isMusicActive(guildId: string): boolean {

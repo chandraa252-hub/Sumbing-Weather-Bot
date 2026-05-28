@@ -23,8 +23,10 @@ async function speak(text, locale, connection) {
     const guildId = connection.joinConfig.guildId;
     const wasSleepcallActive = (0, sleepcall_1.isSleepcallActive)(guildId);
     const wasMusicActive = (0, musicQueue_1.isMusicActive)(guildId);
+    // Duck sleepcall (volume-based — loop keeps running)
     if (wasSleepcallActive) (0, sleepcall_1.duckSleepcall)(guildId);
-    if (wasMusicActive) (0, musicQueue_1.duckMusic)(guildId);
+    // Pause music (stops current song cleanly; resumes after TTS)
+    if (wasMusicActive) (0, musicQueue_1.pauseMusicForInterrupt)(guildId);
     try {
     await new Promise(async (resolve, reject) => {
         const url = (0, google_tts_api_1.getAudioUrl)(text, {
@@ -51,7 +53,8 @@ async function speak(text, locale, connection) {
     });
     } finally {
         if (wasSleepcallActive) (0, sleepcall_1.unduckSleepcall)(guildId);
-        if (wasMusicActive) (0, musicQueue_1.unduckMusic)(guildId);
+        // Signal music queue that TTS is done — it will restart the current song
+        if (wasMusicActive) (0, musicQueue_1.resumeMusicAfterInterrupt)(guildId);
     }
 }
 async function speakCommand(command, args, connection, languageKey) {

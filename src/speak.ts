@@ -6,7 +6,7 @@ import { LanguageKey, Locale } from "./languages/types";
 import logger from "./services/logger";
 import { download } from "./util/download";
 import { duckSleepcall, unduckSleepcall, isSleepcallActive } from "./services/sleepcall";
-import { duckMusic, unduckMusic, isMusicActive } from "./services/musicQueue";
+import { pauseMusicForInterrupt, resumeMusicAfterInterrupt, isMusicActive } from "./services/musicQueue";
 
 export async function speak(text: string, locale: Locale, connection: VoiceConnection): Promise<void> {
     if (connection.state.status !== VoiceConnectionStatus.Ready) {
@@ -20,8 +20,11 @@ export async function speak(text: string, locale: Locale, connection: VoiceConne
     const guildId = connection.joinConfig.guildId;
     const wasSleepcallActive = isSleepcallActive(guildId);
     const wasMusicActive = isMusicActive(guildId);
+
+    // Duck sleepcall (volume-based — sleepcall loop keeps running)
     if (wasSleepcallActive) duckSleepcall(guildId);
-    if (wasMusicActive) duckMusic(guildId);
+    // Pause music (stops current song cleanly; resumes after TTS)
+    if (wasMusicActive) pauseMusicForInterrupt(guildId);
 
     try {
     await new Promise<void>(async (resolve, reject) => {
@@ -54,7 +57,8 @@ export async function speak(text: string, locale: Locale, connection: VoiceConne
     });
     } finally {
         if (wasSleepcallActive) unduckSleepcall(guildId);
-        if (wasMusicActive) unduckMusic(guildId);
+        // Signal music queue that TTS is done — it will restart the current song
+        if (wasMusicActive) resumeMusicAfterInterrupt(guildId);
     }
 }
 

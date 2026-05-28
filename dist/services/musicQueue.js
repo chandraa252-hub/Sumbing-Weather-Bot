@@ -3,12 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.addToQueue = addToQueue;
 exports.skipCurrentSong = skipCurrentSong;
 exports.stopMusicQueue = stopMusicQueue;
+exports.pauseMusicForInterrupt = pauseMusicForInterrupt;
+exports.resumeMusicAfterInterrupt = resumeMusicAfterInterrupt;
 exports.isMusicActive = isMusicActive;
 exports.getMusicInfo = getMusicInfo;
-exports.setMusicStatusMessage = setMusicStatusMessage;
+exports.getYtDlpTitle = getYtDlpTitle;
 exports.duckMusic = duckMusic;
 exports.unduckMusic = unduckMusic;
-exports.getYtDlpTitle = getYtDlpTitle;
 exports.createMusicEmbed = createMusicEmbed;
 exports.createMusicButtons = createMusicButtons;
 
@@ -24,6 +25,7 @@ const sleepcall_1 = require("./sleepcall");
 const constants_1 = require("../constants");
 
 const ffmpegPath = ffmpegStatic.default ?? ffmpegStatic;
+const MAX_STREAM_RETRIES = 3;
 const activeQueues = new Map();
 
 function sleep(ms) {
@@ -71,9 +73,7 @@ async function editStatusMessage(state, ended) {
         } else {
             await msg.edit({ embeds: [createMusicEmbed(state)], components: [createMusicButtons()] });
         }
-    } catch {
-        /* message deleted or not found */
-    }
+    } catch { /* message deleted */ }
 }
 
 async function sendOrUpdateStatusMessage(state) {
@@ -172,25 +172,34 @@ function playStream(conn, streamUrl, songCtrl, state) {
         player.play(resource);
 
         let settled = false;
-        const cleanup = () => {
+        const cleanup = (reason) => {
             if (settled) return;
             settled = true;
             state.volumeTransformer = undefined;
             try { subscription?.unsubscribe(); } catch {}
             try { player.stop(); } catch {}
             try { ffmpeg.kill("SIGKILL"); } catch {}
+            resolve(reason);
         };
 
         const checkInterval = setInterval(() => {
             if (!songCtrl.active || !state.active) {
                 clearInterval(checkInterval);
-                cleanup();
-                resolve();
+                cleanup("user");
             }
-        }, 1000);
+        }, 500);
 
-        player.on("error", () => { clearInterval(checkInterval); cleanup(); resolve(); });
-        ffmpeg.on("close", () => { clearInterval(checkInterval); cleanup(); resolve(); });
+        player.on("error", (err) => {
+            const log = logger_1.default ?? logger_1;
+            log.warn(state.guildId, `MusicQueue player error: ${err?.message ?? err}`);
+            clearInterval(checkInterval);
+            cleanup("error");
+        });
+
+        ffmpeg.on("close", (code) => {
+            clearInterval(checkInterval);
+            cleanup(code === 0 ? "natural" : "error");
+        });
     });
 }
 
@@ -208,6 +217,8 @@ async function runQueue(guildId) {
         state.songController = songCtrl;
 
         await sendOrUpdateStatusMessage(state);
+
+        let reason = "error";
 
         try {
             let conn = (0, voice_1.getVoiceConnection)(guildId, environment_1.environment.botId);
@@ -228,19 +239,43 @@ async function runQueue(guildId) {
                 try {
                     await (0, voice_1.entersState)(conn, voice_1.VoiceConnectionStatus.Ready, 10_000);
                 } catch {
-                    state.currentIndex++;
+                    await sleep(3000);
                     continue;
                 }
             }
 
-            log.info(guildId, `MusicQueue: [${state.currentIndex + 1}/${state.queue.length}] "${item.title}"`);
+            log.info(guildId, `MusicQueue: [${state.currentIndex + 1}/${state.queue.length}] "${item.title}" (attempt ${state.streamRetries + 1})`);
             const streamUrl = await getYtDlpStreamUrl(item.url);
-            await playStream(conn, streamUrl, songCtrl, state);
+            reason = await playStream(conn, streamUrl, songCtrl, state);
         } catch (err) {
             log.warn(guildId, `MusicQueue: error on "${item.title}": ${err}`);
+            reason = "error";
         }
 
         if (!state.active) break;
+
+        // TTS/soundboard interrupted — wait for it to finish, then replay current song
+        if (state.interrupted) {
+            log.info(guildId, `MusicQueue: interrupted by TTS/soundboard, will resume "${item.title}"`);
+            if (state.resumePromise) await state.resumePromise;
+            state.interrupted = false;
+            state.resumePromise = null;
+            state.resumeResolve = null;
+            state.streamRetries = 0;
+            await sleep(300);
+            continue;
+        }
+
+        // Stream dropped due to network/server error — retry
+        if (reason === "error" && state.streamRetries < MAX_STREAM_RETRIES) {
+            state.streamRetries++;
+            log.warn(guildId, `MusicQueue: stream error, retrying "${item.title}" (${state.streamRetries}/${MAX_STREAM_RETRIES})`);
+            await sleep(2000);
+            continue;
+        }
+
+        // Song ended normally, skipped by user, or max retries reached
+        state.streamRetries = 0;
         state.currentIndex++;
         await sleep(500);
     }
@@ -269,6 +304,10 @@ function addToQueue(guildId, item, channelId, textChannelId) {
             active: false,
             songController: { active: false },
             duckCount: 0,
+            interrupted: false,
+            resumePromise: null,
+            resumeResolve: null,
+            streamRetries: 0,
         };
         activeQueues.set(guildId, state);
     }
@@ -291,6 +330,7 @@ function addToQueue(guildId, item, channelId, textChannelId) {
 function skipCurrentSong(guildId) {
     const state = activeQueues.get(guildId);
     if (!state || !state.active) return false;
+    state.interrupted = false;
     state.songController.active = false;
     return true;
 }
@@ -299,8 +339,33 @@ function stopMusicQueue(guildId) {
     const state = activeQueues.get(guildId);
     if (!state) return false;
     state.active = false;
+    state.interrupted = false;
+    state.songController.active = false;
+    const resolve = state.resumeResolve;
+    state.resumeResolve = null;
+    state.resumePromise = null;
+    resolve?.();
+    return true;
+}
+
+function pauseMusicForInterrupt(guildId) {
+    const state = activeQueues.get(guildId);
+    if (!state?.active) return false;
+    state.interrupted = true;
+    state.resumePromise = new Promise((resolve) => {
+        state.resumeResolve = resolve;
+    });
     state.songController.active = false;
     return true;
+}
+
+function resumeMusicAfterInterrupt(guildId) {
+    const state = activeQueues.get(guildId);
+    if (!state) return;
+    const resolve = state.resumeResolve;
+    state.resumeResolve = null;
+    state.resumePromise = null;
+    resolve?.();
 }
 
 function isMusicActive(guildId) {
@@ -316,13 +381,6 @@ function getMusicInfo(guildId) {
         total: state.queue.length,
         remaining: Math.max(0, state.queue.length - state.currentIndex - 1),
     };
-}
-
-function setMusicStatusMessage(guildId, channelId, messageId) {
-    const state = activeQueues.get(guildId);
-    if (!state) return;
-    state.statusChannelId = channelId;
-    state.statusMessageId = messageId;
 }
 
 function duckMusic(guildId) {
