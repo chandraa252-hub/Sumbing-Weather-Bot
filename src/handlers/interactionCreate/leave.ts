@@ -2,9 +2,10 @@ import { getVoiceConnection } from "@discordjs/voice";
 import { type Scope } from "@sentry/node";
 import { ChatInputCommandInteraction } from "discord.js";
 import { environment } from "../../environment";
-import { configRepo, timerRepo } from "../../persistence";
+import { configRepo, timerRepo, sleepcallRepo } from "../../persistence";
 import logger from "../../services/logger";
 import { stopTimer } from "../../services/timer";
+import { stopSleepcall, isSleepcallActive } from "../../services/sleepcall";
 
 export async function leave(interaction: ChatInputCommandInteraction, scope: Scope): Promise<void> {
     const guild = interaction.guild!;
@@ -16,6 +17,12 @@ export async function leave(interaction: ChatInputCommandInteraction, scope: Sco
     if (timerRunning) {
         await stopTimer(guildId, scope);
         logger.info(guildId, "Timer stopped by /leave");
+    }
+
+    if (isSleepcallActive(guildId)) {
+        stopSleepcall(guildId);
+        await sleepcallRepo.remove(guildId);
+        logger.info(guildId, "Sleepcall stopped by /leave");
     }
 
     let disconnected = false;

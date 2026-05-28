@@ -11,6 +11,8 @@ const environment_1 = require("./environment");
 const languages_1 = require("./languages");
 const logger_1 = __importDefault(require("./services/logger"));
 const download_1 = require("./util/download");
+const sleepcall_1 = require("./services/sleepcall");
+const musicQueue_1 = require("./services/musicQueue");
 async function speak(text, locale, connection) {
     if (connection.state.status !== voice_1.VoiceConnectionStatus.Ready) {
         return;
@@ -18,6 +20,14 @@ async function speak(text, locale, connection) {
     if (environment_1.environment.logging.speak) {
         logger_1.default.info(connection.joinConfig.guildId, `Speak: "${text}"`);
     }
+    const guildId = connection.joinConfig.guildId;
+    const wasSleepcallActive = (0, sleepcall_1.isSleepcallActive)(guildId);
+    const wasMusicActive = (0, musicQueue_1.isMusicActive)(guildId);
+    // Duck sleepcall (volume-based — loop keeps running)
+    if (wasSleepcallActive) (0, sleepcall_1.duckSleepcall)(guildId);
+    // Pause music (stops current song cleanly; resumes after TTS)
+    if (wasMusicActive) (0, musicQueue_1.pauseMusicForInterrupt)(guildId);
+    try {
     await new Promise(async (resolve, reject) => {
         const url = (0, google_tts_api_1.getAudioUrl)(text, {
             lang: locale,
@@ -41,6 +51,11 @@ async function speak(text, locale, connection) {
             resolve();
         });
     });
+    } finally {
+        if (wasSleepcallActive) (0, sleepcall_1.unduckSleepcall)(guildId);
+        // Signal music queue that TTS is done — it will restart the current song
+        if (wasMusicActive) (0, musicQueue_1.resumeMusicAfterInterrupt)(guildId);
+    }
 }
 async function speakCommand(command, args, connection, languageKey) {
     const { locale, voiceCommands } = languages_1.LANGUAGES.find((language) => language.key === languageKey);

@@ -10,36 +10,37 @@ const voice_1 = require("@discordjs/voice");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const logger_1 = __importDefault(require("./logger"));
+const sleepcall_1 = require("./sleepcall");
+const musicQueue_1 = require("./musicQueue");
 const SOUNDS_DIR = path_1.default.join(process.cwd(), "sounds");
 const SUPPORTED_EXTENSIONS = [".mp3", ".ogg", ".wav"];
 function toTitleCase(str) {
     return str.replace(/[-_]/g, " ").replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 }
 function listSounds() {
-    if (!fs_1.default.existsSync(SOUNDS_DIR))
-        return [];
+    if (!fs_1.default.existsSync(SOUNDS_DIR)) return [];
     return fs_1.default.readdirSync(SOUNDS_DIR)
         .filter((file) => SUPPORTED_EXTENSIONS.includes(path_1.default.extname(file).toLowerCase()))
         .map((file) => {
-        const value = path_1.default.basename(file, path_1.default.extname(file));
-        return { name: toTitleCase(value), value };
-    })
+            const value = path_1.default.basename(file, path_1.default.extname(file));
+            return { name: toTitleCase(value), value };
+        })
         .sort((a, b) => a.name.localeCompare(b.name));
 }
 function getSoundPath(soundName) {
     for (const ext of SUPPORTED_EXTENSIONS) {
         const filePath = path_1.default.join(SOUNDS_DIR, `${soundName}${ext}`);
-        if (fs_1.default.existsSync(filePath))
-            return filePath;
+        if (fs_1.default.existsSync(filePath)) return filePath;
     }
     return undefined;
 }
 async function playSound(soundName, connection) {
-    try {
-        await (0, voice_1.entersState)(connection, voice_1.VoiceConnectionStatus.Ready, 10_000);
-    }
-    catch {
-        return false;
+    if (connection.state.status !== voice_1.VoiceConnectionStatus.Ready) {
+        try {
+            await (0, voice_1.entersState)(connection, voice_1.VoiceConnectionStatus.Ready, 3_000);
+        } catch {
+            return false;
+        }
     }
     const soundPath = getSoundPath(soundName);
     if (!soundPath) {
@@ -47,6 +48,14 @@ async function playSound(soundName, connection) {
         return false;
     }
     logger_1.default.info(connection.joinConfig.guildId, `Playing sound: ${soundName}`);
+    const guildId = connection.joinConfig.guildId;
+    const wasSleepcallActive = (0, sleepcall_1.isSleepcallActive)(guildId);
+    const wasMusicActive = (0, musicQueue_1.isMusicActive)(guildId);
+    // Duck sleepcall (volume-based)
+    if (wasSleepcallActive) (0, sleepcall_1.duckSleepcall)(guildId);
+    // Pause music (stops current song cleanly; resumes after soundboard)
+    if (wasMusicActive) (0, musicQueue_1.pauseMusicForInterrupt)(guildId);
+    try {
     await new Promise((resolve, reject) => {
         const player = (0, voice_1.createAudioPlayer)();
         const subscription = connection.subscribe(player);
@@ -67,5 +76,10 @@ async function playSound(soundName, connection) {
             resolve();
         });
     });
+    } finally {
+        if (wasSleepcallActive) (0, sleepcall_1.unduckSleepcall)(guildId);
+        // Signal music queue that soundboard is done — it will restart the current song
+        if (wasMusicActive) (0, musicQueue_1.resumeMusicAfterInterrupt)(guildId);
+    }
     return true;
 }

@@ -1,6 +1,6 @@
 import { environment } from "../../environment";
 import { client } from "../../discord";
-import { timerRepo } from "../../persistence";
+import { timerRepo, sleepcallRepo } from "../../persistence";
 import logger from "../../services/logger";
 import { startTimerLoop } from "../../timerLoop";
 import { initCommands } from "./slashCommand";
@@ -16,6 +16,12 @@ export async function handleReady() {
 
     const timerKeys = await timerRepo.getAll();
     logger.info(undefined, `${timerKeys.length} running timer(s)`);
+
+    const staleSleepcalls = await sleepcallRepo.getAll();
+    if (staleSleepcalls.length > 0) {
+        await Promise.all(staleSleepcalls.map((s) => sleepcallRepo.remove(s.guildId)));
+        logger.info(undefined, `Cleared ${staleSleepcalls.length} stale sleepcall(s) from Redis`);
+    }
 
     await initCommands();
 }

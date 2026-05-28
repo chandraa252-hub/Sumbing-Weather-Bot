@@ -14,10 +14,9 @@ const suffix = environment.mainBot ? "" : environment.botId;
 
 export const SLASH_COMMAND = {
     commands: {
-        start: `start${suffix}`,
-        stop: `stop${suffix}`,
+        weather: `weather${suffix}`,
+        music: `music${suffix}`,
         help: `help${suffix}`,
-        status: `status${suffix}`,
         leave: `leave${suffix}`,
         athletes: {
             name: `weathers${suffix}`,
@@ -25,16 +24,15 @@ export const SLASH_COMMAND = {
             athletesPrefix: "weather",
             timePrefix: "time",
         },
-        skip: {
-            name: `skip${suffix}`,
-        },
-        reset: {
-            name: `reset${suffix}`,
-        },
         language: `language${suffix}`,
         soundboard: `soundboard${suffix}`,
+        join: `join${suffix}`,
+        sleepcall: `sleepcall${suffix}`,
     },
 };
+
 export const BUTTON_SOUNDBOARD_OPEN = "soundboard_open";
 export const BUTTON_SOUND_PREFIX = "sound_";
 export const BUTTON_SOUNDBOARD_CLOSE = "soundboard_close";
+export const BUTTON_MUSIC_SKIP = "music_skip";
+export const BUTTON_MUSIC_STOP = "music_stop";

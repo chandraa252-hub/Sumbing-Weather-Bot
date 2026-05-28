@@ -18,5 +18,10 @@ async function handleReady() {
     logger_1.default.info(undefined, `Member of ${guilds.size} server(s)`);
     const timerKeys = await persistence_1.timerRepo.getAll();
     logger_1.default.info(undefined, `${timerKeys.length} running timer(s)`);
+    const staleSleepcalls = await persistence_1.sleepcallRepo.getAll();
+    if (staleSleepcalls.length > 0) {
+        await Promise.all(staleSleepcalls.map((s) => persistence_1.sleepcallRepo.remove(s.guildId)));
+        logger_1.default.info(undefined, `Cleared ${staleSleepcalls.length} stale sleepcall(s) from Redis`);
+    }
     await (0, slashCommand_1.initCommands)();
 }
