@@ -1,0 +1,12 @@
+.env
+.git
+.gitignore
+node_modules
+dist
+attached_assets
+.cache
+.local
+.agents
+logs
+docs
+*.zip

@@ -2,9 +2,11 @@ import { type Scope } from "@sentry/node";
 import { ChatInputCommandInteraction, Guild, GuildMember, TextChannel } from "discord.js";
 import { configRepo } from "../../persistence";
 import { timerRepo } from "../../persistence";
+import { globalTimerRepo } from "../../persistence";
 import logger from "../../services/logger";
 import { getInviteUrl, hasVoicePermissions } from "../../services/permissions";
 import { addTimer } from "../../services/timer";
+import { getGlobalTimerSnapshot } from "../../services/globalTimer";
 import { getVoiceConnection } from "../../util/getVoiceConnection";
 
 async function resolveGuildMember(guild: Guild, interaction: ChatInputCommandInteraction): Promise<GuildMember | null> {
@@ -32,6 +34,14 @@ export async function start(interaction: ChatInputCommandInteraction, scope: Sco
         return;
     }
 
+    const globalState = await globalTimerRepo.get();
+    if (!getGlobalTimerSnapshot(globalState, guildId)) {
+        await interaction.editReply(
+            "Global timer belum aktif. Admin global harus menjalankan `/weather start-global` terlebih dahulu."
+        );
+        return;
+    }
+
     if (!hasVoicePermissions(guild)) {
         const invite = getInviteUrl();
         await interaction.editReply(
@@ -52,5 +62,15 @@ export async function start(interaction: ChatInputCommandInteraction, scope: Sco
 
     await interaction.editReply("Timer started");
 
-    await Promise.all([getVoiceConnection(config, member, guild), addTimer(guildId, channel, scope)]);
+    const [voiceConnection, added] = await Promise.all([
+        getVoiceConnection(config, member, guild),
+        addTimer(guildId, channel, scope),
+    ]);
+    if (!added) {
+        logger.warn(guildId, "Could not subscribe guild to the global timer");
+        if (voiceConnection) {
+            voiceConnection.destroy();
+        }
+        await interaction.editReply("Global timer belum aktif atau gagal disinkronkan.");
+    }
 }

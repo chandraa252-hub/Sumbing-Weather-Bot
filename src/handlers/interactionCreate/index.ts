@@ -1,43 +1,36 @@
-import { GuildMember, Interaction, VoiceChannel } from "discord.js";
+import { GuildMember, Interaction, TextChannel, VoiceChannel } from "discord.js";
 import { getVoiceConnection } from "@discordjs/voice";
 import {
     SLASH_COMMAND,
     BUTTON_SOUNDBOARD_OPEN,
     BUTTON_SOUND_PREFIX,
     BUTTON_SOUNDBOARD_CLOSE,
-    BUTTON_MUSIC_SKIP,
-    BUTTON_MUSIC_STOP,
 } from "../../constants";
 import { environment } from "../../environment";
 import { configRepo, timerRepo } from "../../persistence";
 import logger from "../../services/logger";
 import { HandlerProps } from "../../services/sentry";
-import { BUTTON_SKIP, BUTTON_STOP, updateStatusMessage } from "../../services/statusMessage";
-import { skipCurrentAthlete, stopTimer } from "../../services/timer";
+import { BUTTON_HELP, BUTTON_STOP } from "../../services/statusMessage";
+import { stopTimer } from "../../services/timer";
 import { connectToChannel } from "../../util/connectToChannel";
 import { playSound } from "../../services/soundboard";
-import { skipCurrentSong, stopMusicQueue } from "../../services/musicQueue";
 import { createSoundboardPanel } from "./soundboard";
-import { athletes } from "./athletes";
-import { help } from "./help";
+import { createHelpEmbed, help } from "./help";
 import { weather } from "./weather";
-import { music } from "./music";
 import { language as setLanguage } from "./language";
 import { leave } from "./leave";
 import { soundboard } from "./soundboard";
 import { join } from "./join";
-import { sleepcall } from "./sleepcall";
+import { adminMessage } from "./adminMessage";
 
 const commandsMap: Record<string, (interaction: any, scope: any) => Promise<void>> = {
     [SLASH_COMMAND.commands.help]: help,
     [SLASH_COMMAND.commands.weather]: weather,
-    [SLASH_COMMAND.commands.music]: music,
-    [SLASH_COMMAND.commands.athletes.name]: athletes,
     [SLASH_COMMAND.commands.language]: setLanguage,
     [SLASH_COMMAND.commands.leave]: leave,
     [SLASH_COMMAND.commands.soundboard]: soundboard,
     [SLASH_COMMAND.commands.join]: join,
-    [SLASH_COMMAND.commands.sleepcall]: sleepcall,
+    [SLASH_COMMAND.commands.adminMessage]: adminMessage,
 };
 
 export async function handleInteractionCreate({ args: [interaction], scope }: HandlerProps<[Interaction]>) {
@@ -102,28 +95,6 @@ export async function handleInteractionCreate({ args: [interaction], scope }: Ha
             return;
         }
 
-        if (customId === BUTTON_MUSIC_SKIP) {
-            await interaction.deferUpdate();
-            const skipped = skipCurrentSong(guildId);
-            if (skipped) {
-                await interaction.followUp({ content: "⏭ Lagu dilewati.", ephemeral: true });
-            } else {
-                await interaction.followUp({ content: "ℹ️ Tidak ada musik yang sedang diputar.", ephemeral: true });
-            }
-            return;
-        }
-
-        if (customId === BUTTON_MUSIC_STOP) {
-            await interaction.deferUpdate();
-            const stopped = stopMusicQueue(guildId);
-            if (stopped) {
-                await interaction.followUp({ content: "⏹ Musik dihentikan.", ephemeral: true });
-            } else {
-                await interaction.followUp({ content: "ℹ️ Tidak ada musik yang sedang diputar.", ephemeral: true });
-            }
-            return;
-        }
-
         await interaction.deferUpdate();
         const timer = await timerRepo.get(guildId);
         if (!timer) return;
@@ -136,9 +107,11 @@ export async function handleInteractionCreate({ args: [interaction], scope }: Ha
         }
 
         switch (customId) {
-            case BUTTON_SKIP:
-                await skipCurrentAthlete(guildId);
-                await updateStatusMessage(guildId, scope);
+            case BUTTON_HELP:
+                await interaction.followUp({
+                    embeds: [await createHelpEmbed(guildId)],
+                    ephemeral: true,
+                });
                 break;
 
             case BUTTON_STOP: {
@@ -157,7 +130,13 @@ export async function handleInteractionCreate({ args: [interaction], scope }: Ha
     const commandName = interaction.commandName;
     logger.info(guildId, `Slash Command: ${commandName}`);
 
-    await interaction.deferReply();
+    const weatherSubcommand =
+        commandName === SLASH_COMMAND.commands.weather
+            ? interaction.options.getSubcommand(false)
+            : undefined;
+    const isGlobalTimerCommand = ["start-global", "stop-global", "adjust-global"].includes(weatherSubcommand ?? "");
+    const isAdminMessageCommand = commandName === SLASH_COMMAND.commands.adminMessage;
+    await interaction.deferReply(isGlobalTimerCommand || isAdminMessageCommand ? { ephemeral: true } : undefined);
 
     const command = commandsMap[commandName];
     if (command) {

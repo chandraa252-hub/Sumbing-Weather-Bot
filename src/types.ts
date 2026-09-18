@@ -24,5 +24,15 @@ export interface Timer {
         messageId: string;
     };
     disabledAthletes: Pick<Athlete, "name" | "userId">[];
-    voiceChannelEmptySince?: number;
+}
+
+export type GlobalTimerStatus = "running" | "stopped";
+
+export interface GlobalTimerState {
+    status: GlobalTimerStatus;
+    startAt?: number;
+    stopAt?: number;
+    cycleDuration?: number;
+    weathers: Athlete[];
+    updatedAt: number;
 }

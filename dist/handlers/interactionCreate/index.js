@@ -13,27 +13,22 @@ const statusMessage_1 = require("../../services/statusMessage");
 const timer_1 = require("../../services/timer");
 const connectToChannel_1 = require("../../util/connectToChannel");
 const soundboard_1 = require("../../services/soundboard");
-const musicQueue_1 = require("../../services/musicQueue");
 const soundboard_2 = require("./soundboard");
-const athletes_1 = require("./athletes");
 const help_1 = require("./help");
 const weather_1 = require("./weather");
-const music_1 = require("./music");
 const language_1 = require("./language");
 const leave_1 = require("./leave");
 const soundboard_3 = require("./soundboard");
 const join_1 = require("./join");
-const sleepcall_1 = require("./sleepcall");
+const adminMessage_1 = require("./adminMessage");
 const commandsMap = {
     [constants_1.SLASH_COMMAND.commands.help]: help_1.help,
     [constants_1.SLASH_COMMAND.commands.weather]: weather_1.weather,
-    [constants_1.SLASH_COMMAND.commands.music]: music_1.music,
-    [constants_1.SLASH_COMMAND.commands.athletes.name]: athletes_1.athletes,
     [constants_1.SLASH_COMMAND.commands.language]: language_1.language,
     [constants_1.SLASH_COMMAND.commands.leave]: leave_1.leave,
     [constants_1.SLASH_COMMAND.commands.soundboard]: soundboard_3.soundboard,
     [constants_1.SLASH_COMMAND.commands.join]: join_1.join,
-    [constants_1.SLASH_COMMAND.commands.sleepcall]: sleepcall_1.sleepcall,
+    [constants_1.SLASH_COMMAND.commands.adminMessage]: adminMessage_1.adminMessage,
 };
 async function handleInteractionCreate({ args: [interaction], scope }) {
     if (interaction.isButton() && interaction.inGuild()) {
@@ -50,7 +45,7 @@ async function handleInteractionCreate({ args: [interaction], scope }) {
                 if (!existing) {
                     const channel = interaction.guild?.channels.cache.get(voiceChannelId);
                     if (channel) {
-                        (0, connectToChannel_1.connectToChannel)(channel).catch(() => {});
+                        (0, connectToChannel_1.connectToChannel)(channel).catch(() => { });
                     }
                 }
             }
@@ -88,26 +83,6 @@ async function handleInteractionCreate({ args: [interaction], scope }) {
             }
             return;
         }
-        if (customId === constants_1.BUTTON_MUSIC_SKIP) {
-            await interaction.deferUpdate();
-            const skipped = (0, musicQueue_1.skipCurrentSong)(guildId);
-            if (skipped) {
-                await interaction.followUp({ content: "⏭ Lagu dilewati.", ephemeral: true });
-            } else {
-                await interaction.followUp({ content: "ℹ️ Tidak ada musik yang sedang diputar.", ephemeral: true });
-            }
-            return;
-        }
-        if (customId === constants_1.BUTTON_MUSIC_STOP) {
-            await interaction.deferUpdate();
-            const stopped = (0, musicQueue_1.stopMusicQueue)(guildId);
-            if (stopped) {
-                await interaction.followUp({ content: "⏹ Musik dihentikan.", ephemeral: true });
-            } else {
-                await interaction.followUp({ content: "ℹ️ Tidak ada musik yang sedang diputar.", ephemeral: true });
-            }
-            return;
-        }
         await interaction.deferUpdate();
         const timer = await persistence_1.timerRepo.get(guildId);
         if (!timer)
@@ -117,9 +92,11 @@ async function handleInteractionCreate({ args: [interaction], scope }) {
             return;
         }
         switch (customId) {
-            case statusMessage_1.BUTTON_SKIP:
-                await (0, timer_1.skipCurrentAthlete)(guildId);
-                await (0, statusMessage_1.updateStatusMessage)(guildId, scope);
+            case statusMessage_1.BUTTON_HELP:
+                await interaction.followUp({
+                    embeds: [await (0, help_1.createHelpEmbed)(guildId)],
+                    ephemeral: true,
+                });
                 break;
             case statusMessage_1.BUTTON_STOP: {
                 await (0, timer_1.stopTimer)(guildId, scope);
@@ -134,7 +111,12 @@ async function handleInteractionCreate({ args: [interaction], scope }) {
     const guildId = interaction.guildId;
     const commandName = interaction.commandName;
     logger_1.default.info(guildId, `Slash Command: ${commandName}`);
-    await interaction.deferReply();
+    const weatherSubcommand = commandName === constants_1.SLASH_COMMAND.commands.weather
+        ? interaction.options.getSubcommand(false)
+        : undefined;
+    const isGlobalTimerCommand = ["start-global", "stop-global", "adjust-global"].includes(weatherSubcommand ?? "");
+    const isAdminMessageCommand = commandName === constants_1.SLASH_COMMAND.commands.adminMessage;
+    await interaction.deferReply(isGlobalTimerCommand || isAdminMessageCommand ? { ephemeral: true } : undefined);
     const command = commandsMap[commandName];
     if (command) {
         await command(interaction, scope);

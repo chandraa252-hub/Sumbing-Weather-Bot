@@ -18,6 +18,36 @@ const reconnecting_1 = require("./handlers/reconnecting");
 const persistence_1 = require("./persistence");
 const logger_1 = __importDefault(require("./services/logger"));
 const sentry_1 = require("./services/sentry");
+const LOGIN_RETRY_DELAY_MS = 5_000;
+const LOGIN_MAX_RETRY_DELAY_MS = 30_000;
+function sleep(milliseconds) {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+async function loginWithRetry() {
+    let attempt = 0;
+    while (true) {
+        try {
+            await discord_1.client.login(environment_1.environment.discord.token);
+            logger_1.default.info(undefined, "Discord login successful");
+            return;
+        }
+        catch (error) {
+            const errorCode = error?.code;
+            const errorMessage = String(error?.message ?? error);
+            const isInvalidToken = errorCode === "TokenInvalid" ||
+                errorCode === "TOKEN_INVALID" ||
+                /401|invalid token/i.test(errorMessage);
+            if (isInvalidToken) {
+                logger_1.default.error(undefined, error instanceof Error ? error : new Error(errorMessage));
+                process.exit(1);
+            }
+            attempt += 1;
+            const delay = Math.min(LOGIN_RETRY_DELAY_MS * attempt, LOGIN_MAX_RETRY_DELAY_MS);
+            logger_1.default.warn(undefined, `Discord login failed (${errorMessage}); retrying in ${delay}ms`);
+            await sleep(delay);
+        }
+    }
+}
 async function main() {
     logger_1.default.info(undefined, "Initializing...");
     await persistence_1.redisClient.waitForConnection();
@@ -31,13 +61,14 @@ async function main() {
     discord_1.client.on(...(0, sentry_1.wrapHandler)("guildCreate", guildCreate_1.handleGuildCreate));
     discord_1.client.on(...(0, sentry_1.wrapHandler)("guildDelete", guildDelete_1.handleGuildDelete));
     discord_1.client.on(...(0, sentry_1.wrapHandler)("interactionCreate", interactionCreate_1.handleInteractionCreate));
-    logger_1.default.info(undefined, "Logging in to Discord...");
-    discord_1.client.login(environment_1.environment.discord.token).then(() => {
-        logger_1.default.info(undefined, "Discord login successful");
-    }).catch((err) => {
-        logger_1.default.error(undefined, err);
-        process.exit(1);
+    discord_1.client.rest.on("rateLimited", (rateLimitInfo) => {
+        logger_1.default.warn(undefined, `Discord API rate limit: ${rateLimitInfo.method} ${rateLimitInfo.route} ` +
+            `(scope=${rateLimitInfo.scope}, global=${rateLimitInfo.global}, ` +
+            `limit=${rateLimitInfo.limit}, retryAfter=${rateLimitInfo.retryAfter}ms, ` +
+            `timeToReset=${rateLimitInfo.timeToReset}ms)`);
     });
+    logger_1.default.info(undefined, "Logging in to Discord...");
+    await loginWithRetry();
 }
 main().catch((err) => {
     console.error("Fatal error in main():", err);

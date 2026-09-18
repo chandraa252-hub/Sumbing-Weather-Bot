@@ -1,5 +1,4 @@
 import { ApplicationCommandOptionType, ApplicationCommandType } from "discord.js";
-import range from "lodash/range";
 import hash from "object-hash";
 import { SLASH_COMMAND } from "../../constants";
 import { client } from "../../discord";
@@ -7,7 +6,7 @@ import { slashCommandHashRepo } from "../../persistence";
 import logger from "../../services/logger";
 
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 15;
+const SLASH_COMMAND_REGISTRATION_VERSION = 23;
 
 export async function initCommands() {
     const commands = getSlashCommands();
@@ -68,48 +67,58 @@ export function getSlashCommands() {
                 },
                 {
                     type: ApplicationCommandOptionType.Subcommand,
-                    name: "skip",
-                    description: "Lewati ke cuaca berikutnya dalam rotasi.",
-                },
-                {
-                    type: ApplicationCommandOptionType.Subcommand,
-                    name: "reset",
-                    description: "Hentikan timer dan reset semua konfigurasi server.",
-                },
-                {
-                    type: ApplicationCommandOptionType.Subcommand,
-                    name: "status",
-                    description: "Tampilkan status timer cuaca saat ini.",
-                },
-            ],
-        },
-        {
-            type: ApplicationCommandType.ChatInput,
-            name: S.music,
-            description: "Putar musik YouTube di voice channel",
-            options: [
-                {
-                    type: ApplicationCommandOptionType.Subcommand,
-                    name: "play",
-                    description: "Tambahkan URL YouTube ke antrian dan mulai putar.",
+                    name: "start-global",
+                    description: "Mulai timer global (khusus admin global).",
                     options: [
                         {
                             type: ApplicationCommandOptionType.String,
-                            name: "url",
-                            description: "Link YouTube yang akan diputar",
-                            required: true,
+                            name: "time",
+                            description: "Waktu WITA HH.MM.SS, default langsung mulai.",
+                            required: false,
                         },
                     ],
                 },
                 {
                     type: ApplicationCommandOptionType.Subcommand,
-                    name: "stop",
-                    description: "Hentikan musik dan bersihkan antrian.",
+                    name: "stop-global",
+                    description: "Hentikan timer global (khusus admin global).",
+                    options: [
+                        {
+                            type: ApplicationCommandOptionType.String,
+                            name: "time",
+                            description: "Waktu WITA HH.MM.SS, default langsung berhenti.",
+                            required: false,
+                        },
+                    ],
                 },
                 {
                     type: ApplicationCommandOptionType.Subcommand,
-                    name: "skip",
-                    description: "Lewati lagu saat ini ke lagu berikutnya dalam antrian.",
+                    name: "adjust-global",
+                    description: "Sesuaikan timer global (khusus admin global).",
+                    options: [
+                        {
+                            type: ApplicationCommandOptionType.String,
+                            name: "time",
+                            description: "Waktu WITA HH.MM.SS (opsional).",
+                            required: false,
+                        },
+                        {
+                            type: ApplicationCommandOptionType.Integer,
+                            name: "offset",
+                            description: "Koreksi acuan lama dalam detik; positif maju, negatif mundur.",
+                            required: false,
+                            min_value: -86400,
+                            max_value: 86400,
+                        },
+                        {
+                            type: ApplicationCommandOptionType.Number,
+                            name: "duration",
+                            description: "Durasi satu siklus timer dalam detik, boleh desimal.",
+                            required: false,
+                            min_value: 0.001,
+                            max_value: 86400,
+                        },
+                    ],
                 },
             ],
         },
@@ -153,46 +162,17 @@ export function getSlashCommands() {
         },
         {
             type: ApplicationCommandType.ChatInput,
-            name: S.sleepcall,
-            description: "Bot tetap di VC 24/7 sambil memutar live music YouTube",
+            name: S.adminMessage,
+            description: "Kirim pesan ke channel status semua guild (khusus admin global).",
             options: [
                 {
                     type: ApplicationCommandOptionType.String,
-                    name: "action",
-                    description: "Mulai atau hentikan sleepcall",
-                    required: false,
-                    choices: [
-                        { name: "▶️ Start", value: "start" },
-                        { name: "⏹️ Stop", value: "stop" },
-                        { name: "📊 Status", value: "status" },
-                    ],
-                },
-                {
-                    type: ApplicationCommandOptionType.String,
-                    name: "url",
-                    description: "Link YouTube Live (opsional jika sudah pernah diset)",
-                    required: false,
+                    name: "message",
+                    description: "Pesan yang akan dikirim.",
+                    required: true,
+                    max_length: 2000,
                 },
             ],
-        },
-        {
-            type: ApplicationCommandType.ChatInput,
-            name: S.athletes.name,
-            description: "View or set weathers",
-            options: range(1, S.athletes.athletesCount + 1).flatMap((i) => [
-                {
-                    type: ApplicationCommandOptionType.String,
-                    name: `${S.athletes.athletesPrefix}${i}`,
-                    description: `Weather ${i}`,
-                    required: false,
-                },
-                {
-                    type: ApplicationCommandOptionType.Integer,
-                    name: `${S.athletes.timePrefix}${i}`,
-                    description: `Time in seconds for weather ${i}`,
-                    required: false,
-                },
-            ]),
         },
     ];
 }

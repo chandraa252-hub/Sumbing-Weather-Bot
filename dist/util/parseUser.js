@@ -8,14 +8,12 @@ async function parseUser(s, guild) {
         const userId = match.groups.id;
         const guildMember = await guild.members.fetch(userId);
         return {
-            name: guildMember?.displayName,
+            name: guildMember?.displayName ?? s,
             userId,
         };
     }
-    else {
-        return {
-            name: s,
-            userId: undefined,
-        };
-    }
+    return {
+        name: s,
+        userId: undefined,
+    };
 }

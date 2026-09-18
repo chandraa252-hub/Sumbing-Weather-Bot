@@ -5,9 +5,10 @@ const persistence_1 = require("../../persistence");
 const statusMessage_1 = require("../../services/statusMessage");
 async function status(interaction) {
     const guildId = interaction.guildId;
-    const [config, timer] = await Promise.all([
+    const [config, timer, globalState] = await Promise.all([
         persistence_1.configRepo.get(guildId),
         persistence_1.timerRepo.get(guildId),
+        persistence_1.globalTimerRepo.get(),
     ]);
     if (!timer) {
         const msg = config.languageKey === "id"
@@ -16,5 +17,5 @@ async function status(interaction) {
         await interaction.editReply(msg);
         return;
     }
-    await interaction.editReply({ embeds: [(0, statusMessage_1.createStatusMessage)(config, timer)] });
+    await interaction.editReply({ embeds: [(0, statusMessage_1.createStatusMessage)(config, timer, globalState)] });
 }

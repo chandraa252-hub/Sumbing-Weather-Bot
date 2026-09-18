@@ -10,7 +10,7 @@ export async function handleMessageCreate({ args: [message] }: HandlerProps<[Mes
 
     if (!message.member && "send" in message.channel) {
         message.channel.send(
-            `The timer can only be on servers/guilds - not in direct messages. Add me to a server/guild and type \`/${SLASH_COMMAND["name"]} help\` for more details.`
+            `The timer can only be on servers/guilds - not in direct messages. Add me to a server/guild and type \`/${SLASH_COMMAND.commands.weather} help\` for more details.`
         );
         return;
     }

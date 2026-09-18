@@ -10,7 +10,86 @@ https://github.com/andipaetzold/tttt-discord
 
 <img src="./docs/ttt-timer-bot.png" height="350">
 
+## Requirements
+
+- Node.js `22.12+` (`22.22.2` is pinned in `.nvmrc`)
+- Redis 7 or newer with persistent storage enabled
+- A Discord bot application and token
+- PM2 for an always-running local or VPS installation
+
 ## Installation
+
+### Run locally with PM2
+
+This is the same process used on a VPS. Redis must be running before the bot:
+
+```bash
+cp .env.example .env
+# Edit .env and set DISCORD_TOKEN and REDIS_URL
+npm ci
+npm run build
+npm install --global pm2
+pm2 start ecosystem.config.cjs --update-env
+pm2 save
+pm2 startup
+```
+
+Run the exact command printed by `pm2 startup` to enable automatic startup after
+the machine reboots. Useful PM2 commands:
+
+```bash
+pm2 status
+pm2 logs sumbing-weather-bot
+pm2 restart sumbing-weather-bot --update-env
+pm2 stop sumbing-weather-bot
+```
+
+For a complete Ubuntu/Debian VPS setup, use the bundled script:
+
+```bash
+bash deploy/setup-vps.sh
+```
+
+The script validates Node.js and `.env`, installs the locked dependencies,
+builds the TypeScript source, prunes development packages, and starts PM2.
+
+### Run with Docker Compose
+
+Docker Compose includes a persistent Redis volume:
+
+```bash
+cp .env.example .env
+# Edit .env and set DISCORD_TOKEN
+docker compose up -d --build
+docker compose logs -f bot
+```
+
+Stop the stack without deleting the Redis volume:
+
+```bash
+docker compose down
+```
+
+The `redis-data` volume contains the global timer configuration. Do not use
+`docker compose down -v` unless you intentionally want to erase it.
+
+### Downloaded ZIP package
+
+The release ZIP contains the compiled bot, source, deployment scripts, sounds,
+and configuration templates. On a VPS or local machine:
+
+```bash
+unzip sumbing-weather-bot-vps-pm2.zip
+cd sumbing-weather-bot-vps-pm2
+cp .env.example .env
+# Edit .env
+bash deploy/setup-vps.sh
+```
+
+The ZIP never contains `.env`, Discord credentials, `node_modules`, Redis data,
+or runtime logs.
+
+### Discord installation
 
 Click here to invite the bot to your server:
 
@@ -30,10 +109,37 @@ You will be asked to grant multiple permissions:
 | Speak           | Allows the bot to send audio / voice to a voice channel                     |
                                                                                            
 
+## VPS Deployment
+
+For a production VPS, use the bundled PM2 setup or Docker Compose instructions:
+
+```text
+deploy/README.md
+```
+
+The PM2 path uses system Redis and the Docker path includes a persistent Redis
+container. Both paths load secrets from `.env`. Full VPS details are in
+[`deploy/README.md`](./deploy/README.md).
+
 ## Usage
 
 - All commands are case insensitive.
 - There is only one configuration per server. Changes made in any channel will affect the same configuration.
+
+## Global timer persistence
+
+Global timer settings are stored in Redis under the bot-specific
+`global-timer:<BOT_ID>` key. The saved state includes:
+
+- the reference time created by `/weather start-global`
+- the signed corrections from `/weather adjust-global offset:<seconds>`
+- the cycle duration from `/weather adjust-global duration:<seconds>`
+- running/stopped state and scheduled stop time
+
+Restarting the bot or hosting machine does not reset these values. Redis must
+use persistent storage (`appendonly yes`, `appendfsync everysec`) and its data
+directory or Docker volume must not be deleted. A default state is created only
+when the global timer key does not exist.
 
 ### Documentation Syntax
 
@@ -46,25 +152,6 @@ You will be asked to grant multiple permissions:
 
 ### Commands
 
-#### `/weathers [<weather1>] [<time1>] [<weather2>] [<time2>] ...`
-
-If all options are omitted, returns the configured weather list.
-
-Otherwise, sets the list of weather types and their rotation durations. Time values are optional and default to 210s for extreme weather and 480s for normal weather.
-
-Example:
-
-<img src="./docs/weather1.png" height="100">
-<img src="./docs/weather2.png" height="100">
-
-```bash
-/weathers weather1:extreme weather time1:210 weather2:normal weather time2:480
-```
-
-The rotation now includes multiple weather types with custom durations.
-
----
-
 #### `/help`
 
 <img src="./docs/english-help.png" height="350">
@@ -76,65 +163,88 @@ Shows a list of available commands, project links, and developer information.
 Example output:
 
 ```bash
-Help
-🌦️ Weather Timer
 /weather start — Start the weather timer. Join a voice channel first.
-/weather stop — Stop the timer (bot stays in channel).
-/weather skip — Skip to the next weather in the rotation.
-/weather reset — Stop the timer and reset all server configuration.
-/weather status — Show current timer status.
-/weathers — View or set weather names and rotation durations.
-
-🎵 Music
-/music play url: — Add a YouTube URL to the queue and start playing.
-/music skip — Skip the current song to the next in queue.
-/music stop — Stop music and clear the queue.
-/sleepcall — Keep bot in VC 24/7 while playing YouTube live music.
-
-🔧 Other
-/join — Join your voice channel and show the soundboard.
-/soundboard — Open the soundboard panel to play audio.
+/weather stop — Stop the timer; the bot stays in voice.
+/help — Show this help message.
 /leave — Force disconnect bot from voice channel.
 /language — Set the announcement language.
-/help — Show this help message.
+
 Discord Server (Questions/Feedback)
 https://discord.gg/jB3J3xfmGf
+
 Full Documentation
 https://github.com/chandraa252-hub/Sumbing-Weather-Timer
+
 Web App
 https://github.com/chandraa252-hub
+
 Support this project
 https://discord.com/users/762372166733529088
+
 Made by Stephanus Chandra Wijaya
 ```
 
 ---
 
-#### `/reset`
-
-Stops the timer and resets all configuration of the bot for your server.
-
----
-
-#### `/skip`
-
-Skips the current weather in the rotation and moves to the next one.
-
-If the timer hasn't started yet, this command will immediately start the process.
-
----
-
-#### `/start`
+#### `/weather start`
 
 <img src="./docs/english-status.png" height="350">
 
-Starts the weather timer. The bot joins your current voice channel or uses the previous one.
+Starts the weather timer. The bot joins your current voice channel or uses the previous one and stays connected until `/leave`.
 
 ---
 
-#### `/stop`
+#### `/weather stop`
 
-Stops the timer and leaves the voice channel.
+Stops the timer but keeps the bot in the voice channel.
+
+---
+
+#### `/weather start-global [time]`
+
+Starts the shared weather cycle for all subscribed servers. The optional `time` uses WITA in `HH.MM.SS` format and defaults to starting immediately.
+
+Only configured global admins can use this command.
+
+---
+
+#### `/weather stop-global [time]`
+
+Stops the shared weather cycle. With an optional WITA time, the stop is scheduled for that time; without it, the cycle stops immediately.
+
+Only configured global admins can use this command.
+
+---
+
+#### `/weather adjust-global [time] [offset] [duration]`
+
+Adjusts the global cycle reference time and duration. The optional `time` sets an absolute WITA time. The optional `offset` corrects the previously saved reference time by a number of seconds: positive values move it later and negative values move it earlier. The optional `duration` sets the duration of one cycle in seconds and can contain decimals. Use either `time` or `offset`; `duration` can be used with either one.
+
+Only configured global admins can use this command.
+
+Examples:
+```bash
+/weather adjust-global time:22.30.00
+/weather adjust-global offset:-10
+/weather adjust-global duration:689.7
+/weather adjust-global offset:-10 duration:689.7
+```
+
+---
+
+#### `/admin-message message`
+
+Sends an admin message to every guild where the bot is installed. The bot uses
+the saved timer status channel when available, then falls back to the guild's
+system channel or the first text channel where it can send messages. Only
+configured global admins can use this command. Guilds without an accessible
+text channel are reported as failed while other guilds still receive the
+message.
+
+Example:
+```bash
+/admin-message message:Maintenance selesai, bot akan segera aktif kembali.
+```
 
 ---
 
@@ -142,13 +252,7 @@ Stops the timer and leaves the voice channel.
 
 Force disconnects the bot from the current voice channel.
 
-This command is useful if `/stop` stops the timer but the bot remains connected to the voice channel due to a Discord voice connection issue.
-
----
-
-#### `/status`
-
-Displays the current timer status.
+This command is the only command that intentionally disconnects the bot from the voice channel.
 
 ---
 
@@ -175,7 +279,7 @@ Example:
 /language id
 ```
 
-Example /start message in Indonesian:
+Example `/weather start` message in Indonesian:
 
 <img src="./docs/indonesian-status.png" height="350">
 
@@ -184,8 +288,7 @@ Cuaca Saat Ini
 🌩️ Cuaca Buruk
 (3m 23s lagi)
 
-Cuaca Selanjutnya
-🌤️ Cuaca Cerah
+Cuaca Buruk Berikutnya
 ⠀
 
 ⚠️ Bersiaplah menghadapi perubahan cuaca mendadak.
@@ -195,11 +298,11 @@ Berhati-hati saat cuaca badai petir.
 Durasi efek STMJ: 5 menit.
 ⠀
 🪨 Di Watu Kotak, STMJ + Obor diperlukan
-saat Cuaca Buruk antara pukul 02:00 - 04:00.
+saat Cuaca Buruk antara pukul 02:00 - 05:59.
 
 Kontrol:
-⏭️ Ganti saat cuaca berubah ke kondisi cerah atau kemarau
-⏹️ Hentikan timer cuaca atau gunakan /stop
+⏭️ Ganti saat cuaca buruk dimulai
+⏹️ Hentikan timer cuaca atau gunakan /weather stop
 ```
 
 ---
@@ -207,16 +310,15 @@ Kontrol:
 
 ## Status Message
 
-When starting the timer using `/start`, a message is sent to the current channel. This message automatically updates and shows the current weather, the next weather, and additional information or warnings.
+When starting the timer using `/weather start`, a message is sent to the current channel. This message automatically updates and shows the current weather, the next-weather label, and additional information or warnings.
 
 Example:
 
 ```text
 Current Weather
-🌤️ Normal Weather (7m 14s remaining)
+🌩️ Extreme Weather (7m 14s remaining)
 
-Next Weather
-🌩️ Extreme Weather
+Next Extreme Weather
 
 
 ⚠️ Stay prepared for sudden weather changes. ⚠️
@@ -226,11 +328,11 @@ Be careful during thunderstorm weather.
 STMJ effect duration: 5 minutes.
 
 🪨 In Watu Kotak, STMJ + Torch is required
-during Extreme Weather between 02:00 - 04:00.
+during Extreme Weather between 02:00 - 05:59.
 
 Controls:
-⏭️ Skip to advance when weather changes to normal or dry conditions
-⏹️ Stop the weather timer or use /timer stop
+⏭️ Skip when extreme weather starts
+⏹️ Stop the weather timer or use /weather stop
 ```
 
 The message will continuously update based on the current timer and weather rotation.
@@ -239,13 +341,13 @@ The bot automatically reacts with control emojis to this message. These can be u
 
 | Emoji | Equivalent Slash Command | Note                                      |
 | ----- | ------------------------ | ----------------------------------------- |
-| ⏭️    | `/skip`           | Skip to the next weather in the rotation  |
-| ⏹️    | `/stop`           | Stop the timer and disconnect the bot     |
+| ⏭️    | `/weather skip`    | Skip to the next weather in the rotation  |
+| ⏹️    | `/weather stop`    | Stop the timer; the bot stays in voice    |
 
 
 ## Voice Commands
 
-The bot automatically gives voice notifications 1/5/10/15/30 seconds and 1/3/5/10 minutes before a weather change or before the timer starts.
+The bot automatically gives voice notifications 5/10/15/30 seconds and 1/3/5 minutes before a weather change or before the timer starts.
 
 A voice notification is also played when:
 - the timer starts
@@ -269,9 +371,11 @@ The backup bot behaves similarly but runs independently with its own configurati
 
 ## Data Privacy
 
-This bot does not store or log any personal data outside of what is required for its functionality.
-
-All configurations are temporary and tied to your server session. Removing the bot from your server will automatically remove all related data.
+This bot does not store or log personal data outside of what is required for
+its functionality. Server configuration, timer state, and status-channel
+references are stored in Redis so the bot can recover after a restart. They
+remain available while the Redis data is retained; remove the relevant Redis
+keys or volume when you want to erase the bot state.
 
 The source code of this project is publicly available on GitHub.
 
@@ -283,42 +387,11 @@ The source code of this project is publicly available on GitHub.
 | -------------------------------------------- | --------------------------------------------------------------------------------- |
 | Slash commands are not visible               | Try reinviting the bot using the installation link                               |
 | The bot does not respond to commands         | Make sure the bot has permission to read and send messages in the channel        |
-| The timer does not start                     | Ensure you are connected to a voice channel before running `/timer start`        |
+| The timer does not start                     | Ensure you are connected to a voice channel before running `/weather start`       |
 | The skip button does not work                | Make sure the bot has permission to manage messages and reactions                |
 | The bot does not join voice channel          | Check voice channel permissions (Connect & Speak)
-
-## Docker
-
-The application is available on Docker Hub.
-
-You can spin up your own instance of the bot using the following docker compose configuration:
-
-```yaml
-volumes:
-    redis_data:
-
-services:
-    redis:
-        image: redis:latest
-        restart: always
-        volumes:
-            - redis_data:/data
-
-    sumbing-weather-timer:
-        image: <your-docker-image>
-        restart: always
-        environment:
-            - DISCORD_TOKEN=<your_token>
-            - REDIS_URL=redis://redis:6379
-        links:
-            - redis
-        depends_on:
-            - redis
-```
-
-> Note: Replace `<your-docker-image>` with your Docker Hub image after publishing.
-
----
+| Global timer returned to defaults            | Check that Redis persistence is enabled and that its data directory or Docker volume was not deleted |
+| `/admin-message` missed a guild              | Check that the bot can View Channel and Send Messages in at least one text channel |
 
 ## Recent Beta Development Updates
 
@@ -327,7 +400,7 @@ services:
 - Added Indonesian language support for bot announcements and commands
 - Fixed error when starting the bot via PM2 on Windows
 - Updated timer commands and bot configuration settings
-- Updated countdown timer to refresh every five seconds
+- Updated countdown timer to refresh every ten seconds
 - Saved timer progress at the end of the loop
 - Added project overview and setup instructions to README
 

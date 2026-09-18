@@ -1,5 +1,5 @@
 #syntax=docker/dockerfile:1.23
-FROM node:22.12.0-alpine3.19 AS base
+FROM node:22-alpine AS base
 
 # DEPS
 FROM base AS deps
@@ -7,7 +7,7 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY --link .npmrc package.json package-lock.json ./
+COPY --link package.json package-lock.json ./
 
 RUN npm ci
 
@@ -35,6 +35,7 @@ RUN \
 COPY --link package.json ./
 COPY --from=deps --link /app/node_modules ./node_modules
 COPY --from=builder --link --chown=1001:1001 /app/dist ./dist
+COPY --from=builder --link --chown=1001:1001 /app/sounds ./sounds
 
 RUN npm prune --production
 

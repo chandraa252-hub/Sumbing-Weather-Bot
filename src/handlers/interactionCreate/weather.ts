@@ -2,9 +2,7 @@ import type { Scope } from "@sentry/node";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { start } from "./start";
 import { stop } from "./stop";
-import { skip } from "./skip";
-import { reset } from "./reset";
-import { status } from "./status";
+import { adjustGlobal, startGlobal, stopGlobal } from "./globalTimer";
 
 export async function weather(
     interaction: ChatInputCommandInteraction,
@@ -14,8 +12,8 @@ export async function weather(
     switch (sub) {
         case "start":  return start(interaction, scope);
         case "stop":   return stop(interaction, scope);
-        case "skip":   return skip(interaction);
-        case "reset":  return reset(interaction, scope);
-        case "status": return status(interaction);
+        case "start-global": return startGlobal(interaction, scope);
+        case "stop-global": return stopGlobal(interaction, scope);
+        case "adjust-global": return adjustGlobal(interaction, scope);
     }
 }

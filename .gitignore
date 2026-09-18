@@ -4,3 +4,4 @@ node_modules
 attached_assets/
 *.zip
 .agents/
+logs/

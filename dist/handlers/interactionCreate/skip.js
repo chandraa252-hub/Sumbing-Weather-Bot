@@ -10,6 +10,10 @@ async function skip(interaction) {
         await interaction.editReply("Mulai timer terlebih dahulu menggunakan `/weather start`");
         return;
     }
-    await (0, timer_1.skipCurrentAthlete)(guildId);
+    const skipped = await (0, timer_1.skipCurrentAthlete)(guildId);
+    if (!skipped) {
+        await interaction.editReply("Global timer aktif. Gunakan `restart-global` untuk mengoreksi waktunya.");
+        return;
+    }
     await Promise.all([interaction.editReply("Weather skipped"), (0, statusMessage_1.updateStatusMessage)(guildId)]);
 }

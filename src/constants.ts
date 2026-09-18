@@ -1,38 +1,26 @@
 import { environment } from "./environment";
 
 export const DEFAULT_WEATHERS = [
-    { name: "extreme weather", time: 210 },
-    { name: "normal weather", time: 480 },
+    { name: "extreme weather", time: 689.5 },
 ] as const;
 
 export const DEFAULT_START_DELAY = 0;
 export const DEFAULT_TIME_PER_ATHLETE = 30;
-
-export const EMPTY_VC_TIMEOUT = 60 * 60;
 
 const suffix = environment.mainBot ? "" : environment.botId;
 
 export const SLASH_COMMAND = {
     commands: {
         weather: `weather${suffix}`,
-        music: `music${suffix}`,
         help: `help${suffix}`,
         leave: `leave${suffix}`,
-        athletes: {
-            name: `weathers${suffix}`,
-            athletesCount: 8,
-            athletesPrefix: "weather",
-            timePrefix: "time",
-        },
         language: `language${suffix}`,
         soundboard: `soundboard${suffix}`,
         join: `join${suffix}`,
-        sleepcall: `sleepcall${suffix}`,
+        adminMessage: `admin-message${suffix}`,
     },
 };
 
 export const BUTTON_SOUNDBOARD_OPEN = "soundboard_open";
 export const BUTTON_SOUND_PREFIX = "sound_";
 export const BUTTON_SOUNDBOARD_CLOSE = "soundboard_close";
-export const BUTTON_MUSIC_SKIP = "music_skip";
-export const BUTTON_MUSIC_STOP = "music_stop";

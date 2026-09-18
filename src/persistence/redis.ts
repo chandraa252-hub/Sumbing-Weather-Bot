@@ -6,7 +6,21 @@ export class RedisClient {
     #connected: Promise<void>;
 
     constructor(url: string) {
-        this.#client = createClient({ url });
+        this.#client = createClient({
+            url,
+            socket: {
+                connectTimeout: 10_000,
+                keepAlive: 5_000,
+                reconnectStrategy: (retries) => Math.min(retries * 250, 5_000),
+            },
+            pingInterval: 30_000,
+        });
+        this.#client.on("error", (error) => {
+            logger.warn(undefined, `Redis connection error: ${error?.message ?? error}`);
+        });
+        this.#client.on("reconnecting", () => {
+            logger.info(undefined, "Redis reconnecting");
+        });
         this.#connected = this.#connect();
     }
 

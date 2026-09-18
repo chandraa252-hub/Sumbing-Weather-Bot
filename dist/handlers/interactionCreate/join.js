@@ -1,11 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.join = join;
 const discord_js_1 = require("discord.js");
 const constants_1 = require("../../constants");
 const persistence_1 = require("../../persistence");
 const connectToChannel_1 = require("../../util/connectToChannel");
-const logger_1 = require("../../services/logger");
+const logger_1 = __importDefault(require("../../services/logger"));
 async function join(interaction, _scope) {
     const guild = interaction.guild;
     const guildId = guild.id;
@@ -35,18 +38,18 @@ async function join(interaction, _scope) {
         ? [
             "Selamat datang di **Sumbing Weather Timer**.",
             "",
-            "Gunakan `/start` untuk memulai weather timer",
-            "dan `/help` untuk melihat semua command yang tersedia.",
+            `Gunakan \`/weather start\` untuk memulai weather timer`,
+            `dan \`/help\` untuk melihat semua command yang tersedia.`,
             "",
-            "Soundboard juga tersedia untuk dimainkan.",
+            "Bot akan tetap berada di voice channel sampai diperintahkan `/leave`.",
         ].join("\n")
         : [
             "Welcome to **Sumbing Weather Timer**.",
             "",
-            "Use `/start` to begin the weather timer",
-            "and `/help` to view all available commands.",
+            `Use \`/weather start\` to begin the weather timer`,
+            `and \`/help\` to view all available commands.`,
             "",
-            "A soundboard is also available for you to play with.",
+            "The bot will stay in the voice channel until `/leave` is used.",
         ].join("\n");
     const embed = new discord_js_1.EmbedBuilder().setDescription(description);
     const row = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()

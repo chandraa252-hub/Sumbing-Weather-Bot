@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BUTTON_STOP = exports.BUTTON_SKIP = void 0;
+exports.BUTTON_HELP = exports.BUTTON_STOP = void 0;
 exports.createStatusMessage = createStatusMessage;
 exports.sendStatusMessage = sendStatusMessage;
 exports.updateStatusMessage = updateStatusMessage;
@@ -13,16 +13,17 @@ const constants_1 = require("../constants");
 const discord_1 = require("../discord");
 const persistence_1 = require("../persistence");
 const persistence_2 = require("../persistence");
+const persistence_3 = require("../persistence");
 const emojis_1 = require("../util/emojis");
 const time_1 = require("../util/time");
 const weatherDisplay_1 = require("../util/weatherDisplay");
+const globalTimer_1 = require("./globalTimer");
 const logger_1 = __importDefault(require("./logger"));
-const timer_1 = require("./timer");
-exports.BUTTON_SKIP = "timer_skip";
 exports.BUTTON_STOP = "timer_stop";
+exports.BUTTON_HELP = "timer_help";
 /** Discord collapses extra `\n` in embeds; braille blank lines keep visible vertical space. */
 const BLANK_LINE = "\u2800";
-/** Single gap between Next Weather and tips. */
+/** Single gap between the next-weather label and tips. */
 const WEATHER_TO_TIPS_GAP = `${BLANK_LINE}`;
 function getStatusTips(languageKey) {
     if (languageKey === "id") {
@@ -34,7 +35,7 @@ function getStatusTips(languageKey) {
             "Durasi efek STMJ: 5 menit.",
             BLANK_LINE,
             "🪨 Di Watu Kotak, STMJ + Obor diperlukan",
-            "saat Cuaca Buruk antara pukul 02:00 - 04:00.",
+            "saat Cuaca Buruk antara pukul 02:00 - 05:59.",
         ].join("\n");
     }
     return [
@@ -45,85 +46,83 @@ function getStatusTips(languageKey) {
         "STMJ effect duration: 5 minutes.",
         BLANK_LINE,
         "🪨 In Watu Kotak, STMJ + Torch is required",
-        "during Extreme Weather between 02:00 - 04:00.",
+        "during Extreme Weather between 02:00 - 05:59.",
     ].join("\n");
 }
 function createTimerButtons(languageKey) {
-    const skipLabel = languageKey === "id" ? `${emojis_1.EMOJI_SKIP} Ganti cuaca` : `${emojis_1.EMOJI_SKIP} Next weather`;
     const stopLabel = languageKey === "id" ? `${emojis_1.EMOJI_STOP} Berhenti` : `${emojis_1.EMOJI_STOP} Stop timer`;
     return new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
-        .setCustomId(exports.BUTTON_SKIP)
-        .setLabel(skipLabel)
-        .setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder()
         .setCustomId(exports.BUTTON_STOP)
         .setLabel(stopLabel)
         .setStyle(discord_js_1.ButtonStyle.Danger), new discord_js_1.ButtonBuilder()
         .setCustomId(constants_1.BUTTON_SOUNDBOARD_OPEN)
         .setLabel("🎵 Soundboard")
+        .setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder()
+        .setCustomId(exports.BUTTON_HELP)
+        .setLabel("❓ Help")
         .setStyle(discord_js_1.ButtonStyle.Secondary));
 }
-function buildCurrentWeatherSection(config, timer) {
-    const currentWeather = config.athletes[timer.currentAthleteIndex];
-    const weatherLine = (0, weatherDisplay_1.formatWeatherLine)(currentWeather);
-    const header = config.languageKey === "id" ? "# Cuaca Saat Ini" : "# Current Weather";
-    if (timer.started) {
-        const remainingSeconds = timer.nextChangeTime - (0, time_1.getTime)();
+function buildNextWeatherSection(config, timer, globalState) {
+    const header = config.languageKey === "id" ? "# ⚡ Cuaca Buruk Berikutnya" : "# ⚡ Next Extreme Weather";
+    if (globalState && (!(0, globalTimer_1.getGlobalTimerSnapshot)(globalState, timer.guildId) || globalState.status === "stopped")) {
+        const stoppedLabel = config.languageKey === "id" ? "(timer global berhenti)" : "(global timer stopped)";
+        return [header, `# ${stoppedLabel}`].join("\n");
+    }
+    const displayTimer = globalState
+        ? (0, globalTimer_1.getGlobalTimerSnapshot)(globalState, timer.guildId) ?? timer
+        : timer;
+    if (displayTimer.started) {
+        const remainingSeconds = displayTimer.nextChangeTime - (0, time_1.getTime)();
         const remainingLabel = config.languageKey === "id"
             ? `(${(0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds)} lagi)`
             : `(${(0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds)} remaining)`;
-        return [header, `# ${weatherLine}`, `# ${remainingLabel}`].join("\n");
+        return [header, `# ${remainingLabel}`].join("\n");
     }
     const startsLabel = config.languageKey === "id"
-        ? `(dimulai <t:${timer.nextChangeTime}:R>)`
-        : `(starts <t:${timer.nextChangeTime}:R>)`;
-    return [
-        header,
-        `# ${(0, weatherDisplay_1.getWeatherEmoji)(currentWeather.name)} ${(0, weatherDisplay_1.formatWeatherName)(currentWeather.name)}`,
-        `# ${startsLabel}`,
-    ].join("\n");
-}
-function buildNextWeatherSection(config, timer) {
-    const nextWeather = config.athletes[(0, timer_1.getNextAthleteIndex)(config, timer)];
-    const header = config.languageKey === "id" ? "## Cuaca Selanjutnya" : "## Next Weather";
-    return [header, `### ${(0, weatherDisplay_1.formatWeatherLine)(nextWeather)}`].join("\n");
+        ? `(dimulai <t:${displayTimer.nextChangeTime}:R>)`
+        : `(starts <t:${displayTimer.nextChangeTime}:R>)`;
+    return [header, `# ${startsLabel}`].join("\n");
 }
 /** Discord subtext (`-#`) — smallest size available in embeds. */
 function buildControlsSection(config) {
     if (config.languageKey === "id") {
         return [
             `-# Kontrol:`,
-            `-# ${emojis_1.EMOJI_SKIP} Ganti saat cuaca berubah ke kondisi cerah atau kemarau`,
-            `-# ${emojis_1.EMOJI_STOP} Hentikan timer cuaca atau gunakan \`/${constants_1.SLASH_COMMAND.commands.weather} stop\``,
+            `-# ${emojis_1.EMOJI_STOP} Matikan timer atau gunakan \`/${constants_1.SLASH_COMMAND.commands.weather} stop\``,
+            `-# ❓ Tekan Help untuk panduan penggunaan`,
         ].join("\n");
     }
     return [
         `-# Controls:`,
-        `-# ${emojis_1.EMOJI_SKIP} Skip to advance when weather changes to normal or dry conditions`,
-        `-# ${emojis_1.EMOJI_STOP} Stop the weather timer or use \`/${constants_1.SLASH_COMMAND.commands.weather} stop\``,
+        `-# ${emojis_1.EMOJI_STOP} Stop the timer or use \`/${constants_1.SLASH_COMMAND.commands.weather} stop\``,
+        `-# ❓ Press Help for usage instructions`,
     ].join("\n");
 }
-function buildStatusDescription(config, timer) {
+function buildStatusDescription(config, timer, globalState) {
     return [
-        buildCurrentWeatherSection(config, timer),
-        buildNextWeatherSection(config, timer),
+        buildNextWeatherSection(config, timer, globalState),
         WEATHER_TO_TIPS_GAP,
         getStatusTips(config.languageKey),
         buildControlsSection(config),
     ].join("\n\n");
 }
-function createStatusMessage(config, timer) {
-    return new discord_js_1.EmbedBuilder().setDescription(buildStatusDescription(config, timer));
+function createStatusMessage(config, timer, globalState) {
+    return new discord_js_1.EmbedBuilder().setDescription(buildStatusDescription(config, timer, globalState));
 }
 async function sendStatusMessage(channel, _scope) {
     const guildId = channel.guild.id;
-    const [config, timer] = await Promise.all([persistence_1.configRepo.get(guildId), persistence_2.timerRepo.get(guildId)]);
+    const [config, timer, globalState] = await Promise.all([
+        persistence_1.configRepo.get(guildId),
+        persistence_2.timerRepo.get(guildId),
+        persistence_3.globalTimerRepo.get(),
+    ]);
     if (timer === undefined) {
         return;
     }
     let message;
     try {
         message = await channel.send({
-            embeds: [createStatusMessage(config, timer)],
+            embeds: [createStatusMessage(config, timer, globalState)],
             components: [createTimerButtons(config.languageKey)],
         });
         await persistence_2.timerRepo.update(guildId, (t) => ({
@@ -139,7 +138,11 @@ async function sendStatusMessage(channel, _scope) {
     }
 }
 async function updateStatusMessage(guildId, _scope) {
-    const [config, timer] = await Promise.all([persistence_1.configRepo.get(guildId), persistence_2.timerRepo.get(guildId)]);
+    const [config, timer, globalState] = await Promise.all([
+        persistence_1.configRepo.get(guildId),
+        persistence_2.timerRepo.get(guildId),
+        persistence_3.globalTimerRepo.get(),
+    ]);
     if (timer?.status === undefined) {
         return;
     }
@@ -147,7 +150,7 @@ async function updateStatusMessage(guildId, _scope) {
         const channel = (await discord_1.client.channels.fetch(timer.status.channelId));
         const message = await channel.messages.fetch(timer.status.messageId);
         await message.edit({
-            embeds: [createStatusMessage(config, timer)],
+            embeds: [createStatusMessage(config, timer, globalState)],
             components: [createTimerButtons(config.languageKey)],
         });
     }

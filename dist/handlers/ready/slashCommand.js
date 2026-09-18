@@ -7,14 +7,13 @@ exports.initCommands = initCommands;
 exports.registerGuildCommands = registerGuildCommands;
 exports.getSlashCommands = getSlashCommands;
 const discord_js_1 = require("discord.js");
-const range_1 = __importDefault(require("lodash/range"));
 const object_hash_1 = __importDefault(require("object-hash"));
 const constants_1 = require("../../constants");
 const discord_1 = require("../../discord");
 const persistence_1 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 15;
+const SLASH_COMMAND_REGISTRATION_VERSION = 23;
 async function initCommands() {
     const commands = getSlashCommands();
     const commandHash = (0, object_hash_1.default)({ version: SLASH_COMMAND_REGISTRATION_VERSION, commands });
@@ -54,33 +53,71 @@ function getSlashCommands() {
             name: S.weather,
             description: "Kelola timer cuaca rotasi",
             options: [
-                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "start",  description: "Mulai timer cuaca. Masuk voice channel terlebih dahulu." },
-                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "stop",   description: "Hentikan timer (bot tetap di channel)." },
-                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "skip",   description: "Lewati ke cuaca berikutnya dalam rotasi." },
-                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "reset",  description: "Hentikan timer dan reset semua konfigurasi server." },
-                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "status", description: "Tampilkan status timer cuaca saat ini." },
-            ],
-        },
-        {
-            type: discord_js_1.ApplicationCommandType.ChatInput,
-            name: S.music,
-            description: "Putar musik YouTube di voice channel",
-            options: [
                 {
                     type: discord_js_1.ApplicationCommandOptionType.Subcommand,
-                    name: "play",
-                    description: "Tambahkan URL YouTube ke antrian dan mulai putar.",
+                    name: "start",
+                    description: "Mulai timer cuaca. Masuk voice channel terlebih dahulu.",
+                },
+                {
+                    type: discord_js_1.ApplicationCommandOptionType.Subcommand,
+                    name: "stop",
+                    description: "Hentikan timer (bot tetap di channel).",
+                },
+                {
+                    type: discord_js_1.ApplicationCommandOptionType.Subcommand,
+                    name: "start-global",
+                    description: "Mulai timer global (khusus admin global).",
                     options: [
                         {
                             type: discord_js_1.ApplicationCommandOptionType.String,
-                            name: "url",
-                            description: "Link YouTube yang akan diputar",
-                            required: true,
+                            name: "time",
+                            description: "Waktu WITA HH.MM.SS, default langsung mulai.",
+                            required: false,
                         },
                     ],
                 },
-                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "stop", description: "Hentikan musik dan bersihkan antrian." },
-                { type: discord_js_1.ApplicationCommandOptionType.Subcommand, name: "skip", description: "Lewati lagu saat ini ke lagu berikutnya dalam antrian." },
+                {
+                    type: discord_js_1.ApplicationCommandOptionType.Subcommand,
+                    name: "stop-global",
+                    description: "Hentikan timer global (khusus admin global).",
+                    options: [
+                        {
+                            type: discord_js_1.ApplicationCommandOptionType.String,
+                            name: "time",
+                            description: "Waktu WITA HH.MM.SS, default langsung berhenti.",
+                            required: false,
+                        },
+                    ],
+                },
+                {
+                    type: discord_js_1.ApplicationCommandOptionType.Subcommand,
+                    name: "adjust-global",
+                    description: "Sesuaikan timer global (khusus admin global).",
+                    options: [
+                        {
+                            type: discord_js_1.ApplicationCommandOptionType.String,
+                            name: "time",
+                            description: "Waktu WITA HH.MM.SS (opsional).",
+                            required: false,
+                        },
+                        {
+                            type: discord_js_1.ApplicationCommandOptionType.Integer,
+                            name: "offset",
+                            description: "Koreksi acuan lama dalam detik; positif maju, negatif mundur.",
+                            required: false,
+                            min_value: -86400,
+                            max_value: 86400,
+                        },
+                        {
+                            type: discord_js_1.ApplicationCommandOptionType.Number,
+                            name: "duration",
+                            description: "Durasi satu siklus timer dalam detik, boleh desimal.",
+                            required: false,
+                            min_value: 0.001,
+                            max_value: 86400,
+                        },
+                    ],
+                },
             ],
         },
         {
@@ -123,46 +160,17 @@ function getSlashCommands() {
         },
         {
             type: discord_js_1.ApplicationCommandType.ChatInput,
-            name: S.sleepcall,
-            description: "Bot tetap di VC 24/7 sambil memutar live music YouTube",
+            name: S.adminMessage,
+            description: "Kirim pesan ke channel status semua guild (khusus admin global).",
             options: [
                 {
                     type: discord_js_1.ApplicationCommandOptionType.String,
-                    name: "action",
-                    description: "Mulai atau hentikan sleepcall",
-                    required: false,
-                    choices: [
-                        { name: "▶️ Start", value: "start" },
-                        { name: "⏹️ Stop", value: "stop" },
-                        { name: "📊 Status", value: "status" },
-                    ],
-                },
-                {
-                    type: discord_js_1.ApplicationCommandOptionType.String,
-                    name: "url",
-                    description: "Link YouTube Live (opsional jika sudah pernah diset)",
-                    required: false,
+                    name: "message",
+                    description: "Pesan yang akan dikirim.",
+                    required: true,
+                    max_length: 2000,
                 },
             ],
-        },
-        {
-            type: discord_js_1.ApplicationCommandType.ChatInput,
-            name: S.athletes.name,
-            description: "View or set weathers",
-            options: (0, range_1.default)(1, S.athletes.athletesCount + 1).flatMap((i) => [
-                {
-                    type: discord_js_1.ApplicationCommandOptionType.String,
-                    name: `${S.athletes.athletesPrefix}${i}`,
-                    description: `Weather ${i}`,
-                    required: false,
-                },
-                {
-                    type: discord_js_1.ApplicationCommandOptionType.Integer,
-                    name: `${S.athletes.timePrefix}${i}`,
-                    description: `Time in seconds for weather ${i}`,
-                    required: false,
-                },
-            ]),
         },
     ];
 }

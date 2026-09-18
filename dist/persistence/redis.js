@@ -10,7 +10,21 @@ class RedisClient {
     #client;
     #connected;
     constructor(url) {
-        this.#client = (0, redis_1.createClient)({ url });
+        this.#client = (0, redis_1.createClient)({
+            url,
+            socket: {
+                connectTimeout: 10_000,
+                keepAlive: 5_000,
+                reconnectStrategy: (retries) => Math.min(retries * 250, 5_000),
+            },
+            pingInterval: 30_000,
+        });
+        this.#client.on("error", (error) => {
+            logger_1.default.warn(undefined, `Redis connection error: ${error?.message ?? error}`);
+        });
+        this.#client.on("reconnecting", () => {
+            logger_1.default.info(undefined, "Redis reconnecting");
+        });
         this.#connected = this.#connect();
     }
     async #connect() {

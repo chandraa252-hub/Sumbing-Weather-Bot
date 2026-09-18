@@ -2,8 +2,6 @@ import { createAudioPlayer, createAudioResource, entersState, VoiceConnection, V
 import path from "path";
 import fs from "fs";
 import logger from "./logger";
-import { duckSleepcall, unduckSleepcall, isSleepcallActive } from "./sleepcall";
-import { pauseMusicForInterrupt, resumeMusicAfterInterrupt, isMusicActive } from "./musicQueue";
 
 const SOUNDS_DIR = path.join(process.cwd(), "sounds");
 const SUPPORTED_EXTENSIONS = [".mp3", ".ogg", ".wav"];
@@ -50,16 +48,6 @@ export async function playSound(soundName: string, connection: VoiceConnection):
         return false;
     }
     logger.info(connection.joinConfig.guildId, `Playing sound: ${soundName}`);
-    const guildId = connection.joinConfig.guildId;
-    const wasSleepcallActive = isSleepcallActive(guildId);
-    const wasMusicActive = isMusicActive(guildId);
-
-    // Duck sleepcall (volume-based)
-    if (wasSleepcallActive) duckSleepcall(guildId);
-    // Pause music (stops current song cleanly; resumes after soundboard)
-    if (wasMusicActive) pauseMusicForInterrupt(guildId);
-
-    try {
     await new Promise<void>((resolve, reject) => {
         const player = createAudioPlayer();
         const subscription = connection.subscribe(player);
@@ -80,10 +68,5 @@ export async function playSound(soundName: string, connection: VoiceConnection):
             resolve();
         });
     });
-    } finally {
-        if (wasSleepcallActive) unduckSleepcall(guildId);
-        // Signal music queue that soundboard is done — it will restart the current song
-        if (wasMusicActive) resumeMusicAfterInterrupt(guildId);
-    }
     return true;
 }

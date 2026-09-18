@@ -1,5 +1,5 @@
 import { formatWeatherName } from "../util/weatherDisplay";
-import { Language, VoiceCommands } from "./types";
+import { Language, Locale, VoiceCommands } from "./types";
 
 const voiceCommands: VoiceCommands = {
     300: () => "5 menit lagi, masih lama.",
@@ -19,6 +19,6 @@ const voiceCommands: VoiceCommands = {
 export const language: Language = {
     key: "id",
     name: "Indonesia",
-    locale: "id",
+    locale: "id" as Locale,
     voiceCommands,
 };

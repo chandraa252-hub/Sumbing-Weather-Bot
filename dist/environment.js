@@ -19,6 +19,13 @@ exports.environment = {
     redis: {
         url: process.env.REDIS_URL,
     },
+    globalTimer: {
+        adminIds: (process.env.GLOBAL_ADMIN_IDS ?? "762372166733529088")
+            .split(",")
+            .map((id) => id.trim())
+            .filter(Boolean),
+        utcOffsetHours: 8,
+    },
 };
 if (!exports.environment.discord.token) {
     throw new Error("DISCORD_TOKEN is required");

@@ -7,9 +7,11 @@ exports.start = start;
 const discord_js_1 = require("discord.js");
 const persistence_1 = require("../../persistence");
 const persistence_2 = require("../../persistence");
+const persistence_3 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 const permissions_1 = require("../../services/permissions");
 const timer_1 = require("../../services/timer");
+const globalTimer_1 = require("../../services/globalTimer");
 const getVoiceConnection_1 = require("../../util/getVoiceConnection");
 async function resolveGuildMember(guild, interaction) {
     const member = interaction.member;
@@ -32,6 +34,11 @@ async function start(interaction, scope) {
         await interaction.editReply("Timer is already running");
         return;
     }
+    const globalState = await persistence_3.globalTimerRepo.get();
+    if (!(0, globalTimer_1.getGlobalTimerSnapshot)(globalState, guildId)) {
+        await interaction.editReply("Global timer belum aktif. Admin global harus menjalankan `/weather start-global` terlebih dahulu.");
+        return;
+    }
     if (!(0, permissions_1.hasVoicePermissions)(guild)) {
         const invite = (0, permissions_1.getInviteUrl)();
         await interaction.editReply(`I don't have enough permissions to join the voice channel. Please use this link to grant more permissions: <${invite}>.`);
@@ -44,5 +51,15 @@ async function start(interaction, scope) {
     }
     const channel = interaction.channel;
     await interaction.editReply("Timer started");
-    await Promise.all([(0, getVoiceConnection_1.getVoiceConnection)(config, member, guild), (0, timer_1.addTimer)(guildId, channel, scope)]);
+    const [voiceConnection, added] = await Promise.all([
+        (0, getVoiceConnection_1.getVoiceConnection)(config, member, guild),
+        (0, timer_1.addTimer)(guildId, channel, scope),
+    ]);
+    if (!added) {
+        logger_1.default.warn(guildId, "Could not subscribe guild to the global timer");
+        if (voiceConnection) {
+            voiceConnection.destroy();
+        }
+        await interaction.editReply("Global timer belum aktif atau gagal disinkronkan.");
+    }
 }

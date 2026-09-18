@@ -8,7 +8,7 @@ async function handleMessageCreate({ args: [message] }) {
         return;
     }
     if (!message.member && "send" in message.channel) {
-        message.channel.send(`The timer can only be on servers/guilds - not in direct messages. Add me to a server/guild and type \`/${constants_1.SLASH_COMMAND["name"]} help\` for more details.`);
+        message.channel.send(`The timer can only be on servers/guilds - not in direct messages. Add me to a server/guild and type \`/${constants_1.SLASH_COMMAND.commands.weather} help\` for more details.`);
         return;
     }
 }

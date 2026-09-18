@@ -43,18 +43,18 @@ export async function join(interaction: ChatInputCommandInteraction, _scope: Sco
         ? [
             "Selamat datang di **Sumbing Weather Timer**.",
             "",
-            `Gunakan \`/start\` untuk memulai weather timer`,
-            `dan \`/help\` untuk melihat semua command yang tersedia.`,
+                    `Gunakan \`/weather start\` untuk memulai weather timer`,
+                    `dan \`/help\` untuk melihat semua command yang tersedia.`,
             "",
-            "Soundboard juga tersedia untuk dimainkan.",
+                    "Bot akan tetap berada di voice channel sampai diperintahkan `/leave`.",
         ].join("\n")
         : [
             "Welcome to **Sumbing Weather Timer**.",
             "",
-            `Use \`/start\` to begin the weather timer`,
+                    `Use \`/weather start\` to begin the weather timer`,
             `and \`/help\` to view all available commands.`,
             "",
-            "A soundboard is also available for you to play with.",
+                    "The bot will stay in the voice channel until `/leave` is used.",
         ].join("\n");
 
     const embed = new EmbedBuilder().setDescription(description);

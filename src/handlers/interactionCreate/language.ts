@@ -3,10 +3,10 @@ import { LANGUAGES } from "../../languages";
 import { LanguageKey } from "../../languages/types";
 import { configRepo } from "../../persistence";
 
-const WEATHER_NAMES_BY_LANGUAGE: Record<LanguageKey, [string, string]> = {
-    "en": ["extreme weather", "normal weather"],
-    "en-us": ["extreme weather", "normal weather"],
-    "id": ["cuaca buruk", "cuaca cerah"],
+const WEATHER_NAMES_BY_LANGUAGE: Record<LanguageKey, string> = {
+    "en": "extreme weather",
+    "en-us": "extreme weather",
+    "id": "cuaca buruk",
 };
 
 export async function language(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -21,11 +21,10 @@ export async function language(interaction: ChatInputCommandInteraction): Promis
 
     const config = await configRepo.get(guildId);
 
-    const [name1, name2] = WEATHER_NAMES_BY_LANGUAGE[selectedKey];
+    const defaultWeatherName = WEATHER_NAMES_BY_LANGUAGE[selectedKey];
 
     const updatedAthletes = config.athletes.map((athlete, i) => {
-        if (i === 0) return { ...athlete, name: name1 };
-        if (i === 1) return { ...athlete, name: name2 };
+        if (i === 0) return { ...athlete, name: defaultWeatherName };
         return athlete;
     });
 
