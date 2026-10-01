@@ -55,8 +55,8 @@ async function main() {
     await redisClient.waitForConnection();
 
     client.once(...wrapHandler("ready", handleReady));
-    client.once(...wrapHandler("reconnecting", handleReconnecting));
-    client.once(...wrapHandler("disconnect", handleDisconnect));
+    client.on(...wrapHandler("reconnecting", handleReconnecting));
+    client.on(...wrapHandler("disconnect", handleDisconnect));
     client.on(...wrapHandler("error", handleError));
     client.on(...wrapHandler("messageCreate", handleMessageCreate));
     client.on(...wrapHandler("messageReactionAdd", handleMessageReactionAdd));

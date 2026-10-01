@@ -2,13 +2,17 @@ import { formatWeatherName } from "../util/weatherDisplay";
 import { Language, VoiceCommands } from "./types";
 
 const voiceCommands: VoiceCommands = {
-    300: () => "5 minutes.",
+    480: () => "8 minutes remaining.",
+    300: () => "5 minutes remaining.",
+    240: () => "4 minutes remaining.",
     180: () => "3 minutes remaining.",
-    60: () => "1 minute. Be careful.",
-    30: () => "30 seconds.",
-    15: ({ nextAthlete }) => `${formatWeatherName(String(nextAthlete))}, get ready.`,
-    10: ({ started }) => (started ? "Change in 10..." : "Starting in 10..."),
-    5: () => "5...",
+    120: () => "2 minutes remaining.",
+    60: () => "1 minute remaining.",
+    30: () => "30 seconds remaining.",
+    15: ({ nextAthlete }) => [
+        { text: `${formatWeatherName(String(nextAthlete))}, get ready.`, pauseAfterMs: 2_000 },
+        { text: "Change in 10 seconds." },
+    ],
     0: ({ nextAthlete, started }) =>
         started ? `Changed to ${formatWeatherName(String(nextAthlete))}.` : "Let's go!",
     skip: ({ nextAthlete }) => `Change to ${formatWeatherName(String(nextAthlete))}.`,

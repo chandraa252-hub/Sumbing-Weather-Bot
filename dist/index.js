@@ -52,8 +52,8 @@ async function main() {
     logger_1.default.info(undefined, "Initializing...");
     await persistence_1.redisClient.waitForConnection();
     discord_1.client.once(...(0, sentry_1.wrapHandler)("ready", ready_1.handleReady));
-    discord_1.client.once(...(0, sentry_1.wrapHandler)("reconnecting", reconnecting_1.handleReconnecting));
-    discord_1.client.once(...(0, sentry_1.wrapHandler)("disconnect", disconnect_1.handleDisconnect));
+    discord_1.client.on(...(0, sentry_1.wrapHandler)("reconnecting", reconnecting_1.handleReconnecting));
+    discord_1.client.on(...(0, sentry_1.wrapHandler)("disconnect", disconnect_1.handleDisconnect));
     discord_1.client.on(...(0, sentry_1.wrapHandler)("error", error_1.handleError));
     discord_1.client.on(...(0, sentry_1.wrapHandler)("messageCreate", messageCreate_1.handleMessageCreate));
     discord_1.client.on(...(0, sentry_1.wrapHandler)("messageReactionAdd", messageReactionAdd_1.handleMessageReactionAdd));

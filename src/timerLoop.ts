@@ -8,19 +8,28 @@ import logger from "./services/logger";
 import { updateStatusMessage } from "./services/statusMessage";
 import { getNextAthleteIndex } from "./services/timer";
 import { getGlobalTimerSnapshot } from "./services/globalTimer";
-import { speakCommand } from "./speak";
+import {
+    getAnnouncementKey,
+    getAnnouncementSpeechPolicy,
+    getDueCountdownAnnouncements,
+    getUpcomingAnnouncements,
+    markAnnouncementOnce,
+    TTS_PREPARATION_LEAD_SECONDS,
+} from "./countdownPolicy";
+import { prepareSpeechCommand, speakCommand } from "./speak";
 import { Timer } from "./types";
 import { getVoiceConnection } from "./util/getVoiceConnection";
 import { getTime } from "./util/time";
 
 const INTERVAL = 1_000;
 const STATUS_UPDATE_INTERVAL = 10;
-const ANNOUNCEMENT_SECONDS = new Set([300, 180, 60, 30, 15, 10, 5, 2, 1]);
-const MAX_ANNOUNCEMENT_DELAY_SECONDS = 3;
 
 let timerLoopStart: number;
 const guildTickQueues = new Map<string, Promise<void>>();
-const lastAnnouncementKeys = new Map<string, string>();
+const announcedByTimer = new Map<
+    string,
+    { nextChangeTime: number; keys: Set<string>; preparedKeys: Set<string> }
+>();
 const statusUpdateStates = new Map<string, { pending: boolean; running: boolean }>();
 
 export function startTimerLoop() {
@@ -156,6 +165,7 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
 
         const wasStarted = timer.started;
         const previousAthleteIndex = timer.currentAthleteIndex;
+        const previousNextChangeTime = timer.nextChangeTime;
         const globalStateChanged =
             timer.nextChangeTime !== globalTimer.nextChangeTime ||
             timer.currentAthleteIndex !== globalTimer.currentAthleteIndex ||
@@ -185,25 +195,53 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
             }
         }
 
-        const remainingSeconds = Math.max(timer.nextChangeTime - now, 0);
-        const roundedRemainingSeconds = Math.round(remainingSeconds);
-
         // The text and the TTS announcement both use this same persisted
         // nextChangeTime. This prevents a stale Redis snapshot from making the
         // audio announce a different weather than the status message displays.
         const nextAthleteName = config.athletes[
             transitioned ? timer.currentAthleteIndex : getNextAthleteIndex(config, timer)
         ].name;
-        const announcementCommand = transitioned
-            ? "0"
-            : ANNOUNCEMENT_SECONDS.has(roundedRemainingSeconds)
-                ? String(roundedRemainingSeconds)
-                : undefined;
-
         if (timer.status && timer.started && (transitioned || now % STATUS_UPDATE_INTERVAL === 0)) {
             // Discord REST delays must not hold up the timer transition or TTS.
             // The worker coalesces ticks while an update is still in flight.
             enqueueStatusUpdate(timer.guildId, scope);
+        }
+
+        let timerAnnouncements = announcedByTimer.get(timer.guildId);
+        if (!timerAnnouncements || timerAnnouncements.nextChangeTime !== timer.nextChangeTime) {
+            timerAnnouncements = {
+                nextChangeTime: timer.nextChangeTime,
+                keys: new Set<string>(),
+                preparedKeys: new Set<string>(),
+            };
+            announcedByTimer.set(timer.guildId, timerAnnouncements);
+        }
+
+        const upcomingAnnouncements = getUpcomingAnnouncements(timer.nextChangeTime);
+        for (const announcement of upcomingAnnouncements) {
+            const secondsUntilDue = announcement.dueAt - now;
+            if (secondsUntilDue < 0 || secondsUntilDue > TTS_PREPARATION_LEAD_SECONDS) {
+                continue;
+            }
+            const announcementKey = getAnnouncementKey(
+                timer.nextChangeTime,
+                announcement.command,
+                config.languageKey,
+                nextAthleteName
+            );
+            if (!markAnnouncementOnce(timerAnnouncements.preparedKeys, announcementKey)) {
+                continue;
+            }
+            void prepareSpeechCommand(
+                announcement.command,
+                { nextAthlete: nextAthleteName, started: wasStarted },
+                config.languageKey
+            ).catch((error) => {
+                logger.warn(
+                    timer.guildId,
+                    `Could not prefetch voice announcement "${announcement.command}": ${error}`
+                );
+            });
         }
 
         // Voice is optional — failure here must NOT kill the timer or the countdown
@@ -215,31 +253,34 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
                 return;
             }
 
-            if (announcementCommand) {
-                const announcementKey = [
+            const dueAnnouncements = transitioned
+                ? [{ command: "0", dueAt: Math.min(previousNextChangeTime, now) }]
+                : getDueCountdownAnnouncements(timer.nextChangeTime, now);
+
+            for (const announcement of dueAnnouncements) {
+                const announcementKey = getAnnouncementKey(
                     timer.nextChangeTime,
-                    announcementCommand,
+                    announcement.command,
                     config.languageKey,
-                    nextAthleteName,
-                ].join(":");
-                if (lastAnnouncementKeys.get(timer.guildId) !== announcementKey) {
-                    lastAnnouncementKeys.set(timer.guildId, announcementKey);
-                    const dueAt = transitioned
-                        ? now
-                        : timer.nextChangeTime - Number(announcementCommand);
-                    // Deliberately do not await playback: the timer remains
-                    // anchored to Redis while TTS is fetched/played. speak()
-                    // serializes announcements per guild to prevent overlap.
-                    void speakCommand(
-                        announcementCommand,
-                        { nextAthlete: nextAthleteName, started: wasStarted },
-                        connection,
-                        config.languageKey,
-                        { dueAt, maxDelaySeconds: MAX_ANNOUNCEMENT_DELAY_SECONDS }
-                    ).catch((voiceError) => {
-                        logger.warn(timer.guildId, `Voice announcement failed: ${voiceError}`);
-                    });
+                    nextAthleteName
+                );
+                if (!markAnnouncementOnce(timerAnnouncements.keys, announcementKey)) {
+                    continue;
                 }
+                const speechPolicy = getAnnouncementSpeechPolicy(announcement.command);
+                void speakCommand(
+                    announcement.command,
+                    { nextAthlete: nextAthleteName, started: wasStarted },
+                    connection,
+                    config.languageKey,
+                    {
+                        dueAt: announcement.dueAt,
+                        connectionProvider: () => getVoiceConnection(config),
+                        ...speechPolicy,
+                    }
+                ).catch((voiceError) => {
+                    logger.warn(timer.guildId, `Voice announcement failed: ${voiceError}`);
+                });
             }
         } catch (voiceError) {
             logger.warn(timer.guildId, `Voice error (timer continues): ${voiceError}`);
