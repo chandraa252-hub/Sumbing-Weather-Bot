@@ -4,6 +4,7 @@ import {
     type ChatInputCommandInteraction,
     type Guild,
     type GuildBasedChannel,
+    type NonThreadGuildBasedChannel,
     PermissionFlagsBits,
 } from "discord.js";
 import { client } from "../../discord";
@@ -11,9 +12,11 @@ import { timerRepo } from "../../persistence";
 import { isGlobalAdmin } from "../../services/globalTimer";
 import logger from "../../services/logger";
 
-function canSendToChannel(guild: Guild, channel: GuildBasedChannel): channel is GuildBasedChannel & {
+type AdminMessageChannel = NonThreadGuildBasedChannel & {
     send: (content: string) => Promise<unknown>;
-} {
+};
+
+function canSendToChannel(guild: Guild, channel: GuildBasedChannel): channel is AdminMessageChannel {
     if (!channel.isSendable() || channel.isThread()) {
         return false;
     }
@@ -41,13 +44,13 @@ async function resolveAdminMessageChannel(guild: Guild, statusChannelId?: string
 
     const channels = await guild.channels.fetch();
     return channels
-        .filter((channel): channel is GuildBasedChannel => channel !== null)
-        .filter((channel) =>
+        .filter((channel): channel is NonThreadGuildBasedChannel => channel !== null)
+        .filter((channel): channel is AdminMessageChannel =>
             channel.type === ChannelType.GuildText &&
             canSendToChannel(guild, channel)
         )
         .sort((first, second) => first.rawPosition - second.rawPosition)
-        .first();
+        .first() ?? null;
 }
 
 export async function adminMessage(interaction: ChatInputCommandInteraction, _scope: Scope): Promise<void> {
