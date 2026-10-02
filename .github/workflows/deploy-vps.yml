@@ -1,0 +1,95 @@
+name: Deploy VPS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vps-ready-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Test, build, and deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build production JavaScript
+        run: npm run build
+
+      - name: Validate deploy settings and configure SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+          VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+
+          for name in VPS_HOST VPS_USER VPS_APP_DIR VPS_SSH_PRIVATE_KEY VPS_KNOWN_HOSTS; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error::Required GitHub Actions secret $name is missing."
+              exit 1
+            fi
+          done
+
+          if [[ ! "$VPS_PORT" =~ ^[0-9]+$ ]]; then
+            echo "::error::VPS_PORT must contain only digits."
+            exit 1
+          fi
+
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/id_ed25519" >/dev/null
+
+      - name: Update the VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+          VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
+        run: |
+          set -euo pipefail
+          app_dir_b64="$(printf '%s' "$VPS_APP_DIR" | base64 | tr -d '\n')"
+
+          ssh \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -i "$HOME/.ssh/id_ed25519" \
+            -p "$VPS_PORT" \
+            "$VPS_USER@$VPS_HOST" \
+            "VPS_APP_DIR_B64=$app_dir_b64 bash -s" <<'REMOTE'
+          set -Eeuo pipefail
+          app_dir="$(printf '%s' "$VPS_APP_DIR_B64" | base64 --decode)"
+          unset VPS_APP_DIR_B64
+          cd -- "$app_dir"
+
+          git fetch --no-tags origin refs/heads/vps-ready:refs/remotes/origin/vps-ready
+          if git show-ref --verify --quiet refs/heads/vps-ready; then
+            git switch vps-ready
+          else
+            git switch --track -c vps-ready origin/vps-ready
+          fi
+          git merge --ff-only origin/vps-ready
+          bash deploy/update-vps.sh
+          REMOTE
