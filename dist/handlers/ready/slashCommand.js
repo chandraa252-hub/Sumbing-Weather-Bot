@@ -13,7 +13,7 @@ const discord_1 = require("../../discord");
 const persistence_1 = require("../../persistence");
 const logger_1 = __importDefault(require("../../services/logger"));
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 23;
+const SLASH_COMMAND_REGISTRATION_VERSION = 24;
 async function initCommands() {
     const commands = getSlashCommands();
     const commandHash = (0, object_hash_1.default)({ version: SLASH_COMMAND_REGISTRATION_VERSION, commands });
@@ -144,6 +144,21 @@ function getSlashCommands() {
                         { name: "English 🇬🇧 (default)", value: "en" },
                         { name: "English 🇺🇸", value: "en-us" },
                         { name: "Indonesia 🇮🇩", value: "id" },
+                        { name: "中文（简体）🇨🇳", value: "zh-cn" },
+                        { name: "Filipino 🇵🇭", value: "fil" },
+                        { name: "Français 🇫🇷", value: "fr" },
+                        { name: "Deutsch 🇩🇪", value: "de" },
+                        { name: "हिन्दी 🇮🇳", value: "hi" },
+                        { name: "日本語 🇯🇵", value: "ja" },
+                        { name: "Italiano 🇮🇹", value: "it" },
+                        { name: "Basa Jawa 🇮🇩", value: "jv" },
+                        { name: "Bahasa Melayu 🇲🇾", value: "ms" },
+                        { name: "Português (Portugal) 🇵🇹", value: "pt" },
+                        { name: "Русский 🇷🇺", value: "ru" },
+                        { name: "Basa Sunda 🇮🇩", value: "su" },
+                        { name: "ไทย 🇹🇭", value: "th" },
+                        { name: "العربية 🇸🇦", value: "ar" },
+                        { name: "Español 🇪🇸", value: "es" },
                     ],
                 },
             ],

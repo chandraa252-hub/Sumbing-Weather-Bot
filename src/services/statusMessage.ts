@@ -6,6 +6,7 @@ import { configRepo } from "../persistence";
 import { timerRepo } from "../persistence";
 import { globalTimerRepo } from "../persistence";
 import type { Config, GlobalTimerState, Timer } from "../types";
+import { WEATHER_STATUS_COPY } from "../languages/weatherStatus";
 import { EMOJI_STOP } from "../util/emojis";
 import { getTime } from "../util/time";
 import { formatRemainingDuration } from "../util/weatherDisplay";
@@ -20,29 +21,8 @@ const BLANK_LINE = "\u2800";
 /** Single gap between the next-weather label and tips. */
 const WEATHER_TO_TIPS_GAP = `${BLANK_LINE}`;
 
-function getStatusTips(languageKey: string): string {
-    if (languageKey === "id") {
-        return [
-            "⚠️ Bersiaplah menghadapi perubahan cuaca mendadak.",
-            "Berhati-hati saat cuaca badai petir.",
-            BLANK_LINE,
-            "☕ STMJ dianjurkan saat cuaca malam hari.",
-            "Durasi efek STMJ: 5 menit.",
-            BLANK_LINE,
-            "🪨 Di Watu Kotak, STMJ + Obor diperlukan",
-            "saat Cuaca Buruk antara pukul 02:00 - 05:59.",
-        ].join("\n");
-    }
-    return [
-        "⚠️ Stay prepared for sudden weather changes.",
-        "Be careful during thunderstorm weather.",
-        BLANK_LINE,
-        "☕ STMJ is recommended during nighttime weather.",
-        "STMJ effect duration: 5 minutes.",
-        BLANK_LINE,
-        "🪨 In Watu Kotak, STMJ + Torch is required",
-            "during Extreme Weather between 02:00 - 05:59.",
-    ].join("\n");
+function getStatusTips(languageKey: Config["languageKey"]): string {
+    return WEATHER_STATUS_COPY[languageKey].tips;
 }
 
 function createTimerButtons(languageKey: string): ActionRowBuilder<ButtonBuilder> {
@@ -64,10 +44,10 @@ function createTimerButtons(languageKey: string): ActionRowBuilder<ButtonBuilder
 }
 
 function buildNextWeatherSection(config: Config, timer: Timer, globalState?: GlobalTimerState): string {
-    const header = config.languageKey === "id" ? "# ⚡ Cuaca Buruk Berikutnya" : "# ⚡ Next Extreme Weather";
+    const copy = WEATHER_STATUS_COPY[config.languageKey];
+    const header = copy.heading;
     if (globalState && (!getGlobalTimerSnapshot(globalState, timer.guildId) || globalState.status === "stopped")) {
-        const stoppedLabel = config.languageKey === "id" ? "(timer global berhenti)" : "(global timer stopped)";
-        return [header, `# ${stoppedLabel}`].join("\n");
+        return [header, `# ${copy.timerStopped}`].join("\n");
     }
 
     const displayTimer = globalState
@@ -75,15 +55,11 @@ function buildNextWeatherSection(config: Config, timer: Timer, globalState?: Glo
         : timer;
     if (displayTimer.started) {
         const remainingSeconds = displayTimer.nextChangeTime - getTime();
-        const remainingLabel = config.languageKey === "id"
-            ? `(${formatRemainingDuration(remainingSeconds)} lagi)`
-            : `(${formatRemainingDuration(remainingSeconds)} remaining)`;
+        const remainingLabel = copy.remaining(formatRemainingDuration(remainingSeconds));
         return [header, `# ${remainingLabel}`].join("\n");
     }
 
-    const startsLabel = config.languageKey === "id"
-        ? `(dimulai <t:${displayTimer.nextChangeTime}:R>)`
-        : `(starts <t:${displayTimer.nextChangeTime}:R>)`;
+    const startsLabel = copy.starts(`<t:${displayTimer.nextChangeTime}:R>`);
     return [header, `# ${startsLabel}`].join("\n");
 }
 

@@ -2,12 +2,7 @@ import { ChatInputCommandInteraction } from "discord.js";
 import { LANGUAGES } from "../../languages";
 import { LanguageKey } from "../../languages/types";
 import { configRepo } from "../../persistence";
-
-const WEATHER_NAMES_BY_LANGUAGE: Record<LanguageKey, string> = {
-    "en": "extreme weather",
-    "en-us": "extreme weather",
-    "id": "cuaca buruk",
-};
+import { DEFAULT_WEATHER_NAME_ALIASES, DEFAULT_WEATHER_NAMES } from "../../languages/localized";
 
 export async function language(interaction: ChatInputCommandInteraction): Promise<void> {
     const guildId = interaction.guildId!;
@@ -21,10 +16,11 @@ export async function language(interaction: ChatInputCommandInteraction): Promis
 
     const config = await configRepo.get(guildId);
 
-    const defaultWeatherName = WEATHER_NAMES_BY_LANGUAGE[selectedKey];
-
     const updatedAthletes = config.athletes.map((athlete, i) => {
-        if (i === 0) return { ...athlete, name: defaultWeatherName };
+        const isDefaultName = DEFAULT_WEATHER_NAME_ALIASES.has(athlete.name.toLowerCase().trim());
+        if (i === 0 && isDefaultName) {
+            return { ...athlete, name: DEFAULT_WEATHER_NAMES[selectedKey] };
+        }
         return athlete;
     });
 

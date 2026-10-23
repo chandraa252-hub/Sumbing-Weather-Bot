@@ -14,6 +14,7 @@ const discord_1 = require("../discord");
 const persistence_1 = require("../persistence");
 const persistence_2 = require("../persistence");
 const persistence_3 = require("../persistence");
+const weatherStatus_1 = require("../languages/weatherStatus");
 const emojis_1 = require("../util/emojis");
 const time_1 = require("../util/time");
 const weatherDisplay_1 = require("../util/weatherDisplay");
@@ -26,28 +27,7 @@ const BLANK_LINE = "\u2800";
 /** Single gap between the next-weather label and tips. */
 const WEATHER_TO_TIPS_GAP = `${BLANK_LINE}`;
 function getStatusTips(languageKey) {
-    if (languageKey === "id") {
-        return [
-            "⚠️ Bersiaplah menghadapi perubahan cuaca mendadak.",
-            "Berhati-hati saat cuaca badai petir.",
-            BLANK_LINE,
-            "☕ STMJ dianjurkan saat cuaca malam hari.",
-            "Durasi efek STMJ: 5 menit.",
-            BLANK_LINE,
-            "🪨 Di Watu Kotak, STMJ + Obor diperlukan",
-            "saat Cuaca Buruk antara pukul 02:00 - 05:59.",
-        ].join("\n");
-    }
-    return [
-        "⚠️ Stay prepared for sudden weather changes.",
-        "Be careful during thunderstorm weather.",
-        BLANK_LINE,
-        "☕ STMJ is recommended during nighttime weather.",
-        "STMJ effect duration: 5 minutes.",
-        BLANK_LINE,
-        "🪨 In Watu Kotak, STMJ + Torch is required",
-        "during Extreme Weather between 02:00 - 05:59.",
-    ].join("\n");
+    return weatherStatus_1.WEATHER_STATUS_COPY[languageKey].tips;
 }
 function createTimerButtons(languageKey) {
     const stopLabel = languageKey === "id" ? `${emojis_1.EMOJI_STOP} Berhenti` : `${emojis_1.EMOJI_STOP} Stop timer`;
@@ -63,24 +43,20 @@ function createTimerButtons(languageKey) {
         .setStyle(discord_js_1.ButtonStyle.Secondary));
 }
 function buildNextWeatherSection(config, timer, globalState) {
-    const header = config.languageKey === "id" ? "# ⚡ Cuaca Buruk Berikutnya" : "# ⚡ Next Extreme Weather";
+    const copy = weatherStatus_1.WEATHER_STATUS_COPY[config.languageKey];
+    const header = copy.heading;
     if (globalState && (!(0, globalTimer_1.getGlobalTimerSnapshot)(globalState, timer.guildId) || globalState.status === "stopped")) {
-        const stoppedLabel = config.languageKey === "id" ? "(timer global berhenti)" : "(global timer stopped)";
-        return [header, `# ${stoppedLabel}`].join("\n");
+        return [header, `# ${copy.timerStopped}`].join("\n");
     }
     const displayTimer = globalState
         ? (0, globalTimer_1.getGlobalTimerSnapshot)(globalState, timer.guildId) ?? timer
         : timer;
     if (displayTimer.started) {
         const remainingSeconds = displayTimer.nextChangeTime - (0, time_1.getTime)();
-        const remainingLabel = config.languageKey === "id"
-            ? `(${(0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds)} lagi)`
-            : `(${(0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds)} remaining)`;
+        const remainingLabel = copy.remaining((0, weatherDisplay_1.formatRemainingDuration)(remainingSeconds));
         return [header, `# ${remainingLabel}`].join("\n");
     }
-    const startsLabel = config.languageKey === "id"
-        ? `(dimulai <t:${displayTimer.nextChangeTime}:R>)`
-        : `(starts <t:${displayTimer.nextChangeTime}:R>)`;
+    const startsLabel = copy.starts(`<t:${displayTimer.nextChangeTime}:R>`);
     return [header, `# ${startsLabel}`].join("\n");
 }
 /** Discord subtext (`-#`) — smallest size available in embeds. */
