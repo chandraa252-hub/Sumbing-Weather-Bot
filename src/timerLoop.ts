@@ -11,6 +11,7 @@ import { getGlobalTimerSnapshot } from "./services/globalTimer";
 import {
     getAnnouncementKey,
     getAnnouncementSpeechPolicy,
+    isAnnouncementCycleActive,
     getDueCountdownAnnouncements,
     getUpcomingAnnouncements,
     markAnnouncementOnce,
@@ -28,7 +29,7 @@ let timerLoopStart: number;
 const guildTickQueues = new Map<string, Promise<void>>();
 const announcedByTimer = new Map<
     string,
-    { nextChangeTime: number; keys: Set<string>; preparedKeys: Set<string> }
+    { nextChangeTime: number; started: boolean; keys: Set<string>; preparedKeys: Set<string> }
 >();
 const statusUpdateStates = new Map<string, { pending: boolean; running: boolean }>();
 
@@ -134,12 +135,14 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
         // while this tick was queued. Always use the latest persisted state.
         const latestTimer = await timerRepo.get(timer.guildId);
         if (!latestTimer) {
+            announcedByTimer.delete(timer.guildId);
             return;
         }
         timer = latestTimer;
 
         const globalState = await globalTimerRepo.get();
         if (!globalState) {
+            announcedByTimer.delete(timer.guildId);
             return;
         }
         if (globalState.status === "running" && globalState.stopAt !== undefined && now >= globalState.stopAt) {
@@ -149,16 +152,19 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
                 stopAt: undefined,
                 updatedAt: now,
             });
+            announcedByTimer.delete(timer.guildId);
             return;
         }
 
         const globalTimer = getGlobalTimerSnapshot(globalState, timer.guildId, now);
         if (!globalTimer) {
+            announcedByTimer.delete(timer.guildId);
             return;
         }
 
         const config = await configRepo.get(timer.guildId);
         if (config.athletes.length === 0) {
+            announcedByTimer.delete(timer.guildId);
             logger.warn(timer.guildId, "Timer has no configured weathers; waiting for configuration");
             return;
         }
@@ -208,9 +214,14 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
         }
 
         let timerAnnouncements = announcedByTimer.get(timer.guildId);
-        if (!timerAnnouncements || timerAnnouncements.nextChangeTime !== timer.nextChangeTime) {
+        if (
+            !timerAnnouncements ||
+            timerAnnouncements.nextChangeTime !== timer.nextChangeTime ||
+            timerAnnouncements.started !== timer.started
+        ) {
             timerAnnouncements = {
                 nextChangeTime: timer.nextChangeTime,
+                started: timer.started,
                 keys: new Set<string>(),
                 preparedKeys: new Set<string>(),
             };
@@ -276,6 +287,18 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
                     {
                         dueAt: announcement.dueAt,
                         connectionProvider: () => getVoiceConnection(config),
+                        isCurrentCycle: () => {
+                            const currentAnnouncements = announcedByTimer.get(timer.guildId);
+                            return (
+                                currentAnnouncements === timerAnnouncements &&
+                                isAnnouncementCycleActive(
+                                    timerAnnouncements.nextChangeTime,
+                                    currentAnnouncements?.nextChangeTime,
+                                    timerAnnouncements.started,
+                                    currentAnnouncements?.started
+                                )
+                            );
+                        },
                         ...speechPolicy,
                     }
                 ).catch((voiceError) => {

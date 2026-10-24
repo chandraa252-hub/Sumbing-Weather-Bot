@@ -5,9 +5,15 @@ export const RETRY_DELAY_CAP_MS = 15_000;
 
 const LONG_ANNOUNCEMENT_COMMANDS = new Set(["480", "300", "240", "180", "120", "60"]);
 const MAX_DELAY_SECONDS: Record<string, number> = {
+    "480": 30,
+    "300": 30,
+    "240": 30,
+    "180": 30,
+    "120": 30,
+    "60": 15,
+    "30": 5,
     "0": 3,
     "15": 3,
-    "30": 10,
 };
 
 export interface CountdownAnnouncement {
@@ -61,6 +67,7 @@ export function markAnnouncementOnce(keys: Set<string>, key: string): boolean {
 export function getAnnouncementSpeechPolicy(command: string): AnnouncementSpeechPolicy {
     if (LONG_ANNOUNCEMENT_COMMANDS.has(command)) {
         return {
+            maxDelaySeconds: MAX_DELAY_SECONDS[command],
             retryUntilReady: true,
             repeatIfLateAfterSeconds: LONG_ANNOUNCEMENT_REPEAT_AFTER_SECONDS,
         };
@@ -77,7 +84,20 @@ export function shouldSkipLateAnnouncement(delaySeconds: number, maxDelaySeconds
 }
 
 export function getLateRepeatCount(delaySeconds: number, repeatAfterSeconds: number): number {
-    return delaySeconds > repeatAfterSeconds ? 1 : 0;
+    return delaySeconds >= repeatAfterSeconds ? 1 : 0;
+}
+
+export function isAnnouncementCycleActive(
+    expectedNextChangeTime: number,
+    currentNextChangeTime: number | undefined,
+    expectedStarted: boolean,
+    currentStarted: boolean | undefined
+): boolean {
+    return (
+        expectedStarted &&
+        currentStarted === true &&
+        currentNextChangeTime === expectedNextChangeTime
+    );
 }
 
 export function getExponentialRetryDelayMs(attempt: number): number {

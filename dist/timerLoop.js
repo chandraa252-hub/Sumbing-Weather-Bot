@@ -111,11 +111,13 @@ async function tickTimer(timer, now) {
         // while this tick was queued. Always use the latest persisted state.
         const latestTimer = await persistence_2.timerRepo.get(timer.guildId);
         if (!latestTimer) {
+            announcedByTimer.delete(timer.guildId);
             return;
         }
         timer = latestTimer;
         const globalState = await persistence_3.globalTimerRepo.get();
         if (!globalState) {
+            announcedByTimer.delete(timer.guildId);
             return;
         }
         if (globalState.status === "running" && globalState.stopAt !== undefined && now >= globalState.stopAt) {
@@ -125,14 +127,17 @@ async function tickTimer(timer, now) {
                 stopAt: undefined,
                 updatedAt: now,
             });
+            announcedByTimer.delete(timer.guildId);
             return;
         }
         const globalTimer = (0, globalTimer_1.getGlobalTimerSnapshot)(globalState, timer.guildId, now);
         if (!globalTimer) {
+            announcedByTimer.delete(timer.guildId);
             return;
         }
         const config = await persistence_1.configRepo.get(timer.guildId);
         if (config.athletes.length === 0) {
+            announcedByTimer.delete(timer.guildId);
             logger_1.default.warn(timer.guildId, "Timer has no configured weathers; waiting for configuration");
             return;
         }
@@ -170,9 +175,12 @@ async function tickTimer(timer, now) {
             enqueueStatusUpdate(timer.guildId, scope);
         }
         let timerAnnouncements = announcedByTimer.get(timer.guildId);
-        if (!timerAnnouncements || timerAnnouncements.nextChangeTime !== timer.nextChangeTime) {
+        if (!timerAnnouncements ||
+            timerAnnouncements.nextChangeTime !== timer.nextChangeTime ||
+            timerAnnouncements.started !== timer.started) {
             timerAnnouncements = {
                 nextChangeTime: timer.nextChangeTime,
+                started: timer.started,
                 keys: new Set(),
                 preparedKeys: new Set(),
             };
@@ -211,6 +219,11 @@ async function tickTimer(timer, now) {
                 void (0, speak_1.speakCommand)(announcement.command, { nextAthlete: nextAthleteName, started: wasStarted }, connection, config.languageKey, {
                     dueAt: announcement.dueAt,
                     connectionProvider: () => (0, getVoiceConnection_1.getVoiceConnection)(config),
+                    isCurrentCycle: () => {
+                        const currentAnnouncements = announcedByTimer.get(timer.guildId);
+                        return (currentAnnouncements === timerAnnouncements &&
+                            (0, countdownPolicy_1.isAnnouncementCycleActive)(timerAnnouncements.nextChangeTime, currentAnnouncements?.nextChangeTime, timerAnnouncements.started, currentAnnouncements?.started));
+                    },
                     ...speechPolicy,
                 }).catch((voiceError) => {
                     logger_1.default.warn(timer.guildId, `Voice announcement failed: ${voiceError}`);

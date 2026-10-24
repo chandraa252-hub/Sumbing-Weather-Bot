@@ -183,6 +183,7 @@ interface SpeechCommandOptions {
     repeatIfLateAfterSeconds?: number;
     retryUntilReady?: boolean;
     connectionProvider?: () => Promise<VoiceConnection | undefined>;
+    isCurrentCycle?: () => boolean;
 }
 
 export async function speakCommand(
@@ -215,19 +216,20 @@ export async function speakCommand(
     const current = previous
         .catch(() => undefined)
         .then(async () => {
-            const isStale = () => {
+            const skipIfStale = () => {
+                if (options.isCurrentCycle && !options.isCurrentCycle()) {
+                    logger.info(guildId, `Skipping voice announcement "${text}" because its timer cycle is no longer active`);
+                    return true;
+                }
+
                 if (options.dueAt === undefined || options.maxDelaySeconds === undefined) {
                     return false;
                 }
-                const delay = getTime() - options.dueAt;
-                return shouldSkipLateAnnouncement(delay, options.maxDelaySeconds);
-            };
 
-            const skipIfStale = () => {
-                if (!isStale()) {
+                const delay = getTime() - options.dueAt;
+                if (!shouldSkipLateAnnouncement(delay, options.maxDelaySeconds)) {
                     return false;
                 }
-                const delay = getTime() - (options.dueAt ?? getTime());
                 logger.info(guildId, `Skipping stale voice announcement "${text}" (${delay}s late)`);
                 return true;
             };
@@ -274,6 +276,9 @@ export async function speakCommand(
                         }
                     }
                     if (repeatRequired && !repeatCompleted) {
+                        if (skipIfStale()) {
+                            return;
+                        }
                         await playAnnouncement();
                         repeatCompleted = true;
                     }

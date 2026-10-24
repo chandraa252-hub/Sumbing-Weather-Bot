@@ -150,18 +150,18 @@ async function speakCommand(command, args, connection, languageKey, options = {}
     const current = previous
         .catch(() => undefined)
         .then(async () => {
-        const isStale = () => {
+        const skipIfStale = () => {
+            if (options.isCurrentCycle && !options.isCurrentCycle()) {
+                logger_1.default.info(guildId, `Skipping voice announcement "${text}" because its timer cycle is no longer active`);
+                return true;
+            }
             if (options.dueAt === undefined || options.maxDelaySeconds === undefined) {
                 return false;
             }
             const delay = (0, time_1.getTime)() - options.dueAt;
-            return (0, countdownPolicy_1.shouldSkipLateAnnouncement)(delay, options.maxDelaySeconds);
-        };
-        const skipIfStale = () => {
-            if (!isStale()) {
+            if (!(0, countdownPolicy_1.shouldSkipLateAnnouncement)(delay, options.maxDelaySeconds)) {
                 return false;
             }
-            const delay = (0, time_1.getTime)() - (options.dueAt ?? (0, time_1.getTime)());
             logger_1.default.info(guildId, `Skipping stale voice announcement "${text}" (${delay}s late)`);
             return true;
         };
@@ -200,6 +200,9 @@ async function speakCommand(command, args, connection, languageKey, options = {}
                     }
                 }
                 if (repeatRequired && !repeatCompleted) {
+                    if (skipIfStale()) {
+                        return;
+                    }
                     await playAnnouncement();
                     repeatCompleted = true;
                 }

@@ -8,6 +8,7 @@ exports.markAnnouncementOnce = markAnnouncementOnce;
 exports.getAnnouncementSpeechPolicy = getAnnouncementSpeechPolicy;
 exports.shouldSkipLateAnnouncement = shouldSkipLateAnnouncement;
 exports.getLateRepeatCount = getLateRepeatCount;
+exports.isAnnouncementCycleActive = isAnnouncementCycleActive;
 exports.getExponentialRetryDelayMs = getExponentialRetryDelayMs;
 exports.ANNOUNCEMENT_SECONDS = [480, 300, 240, 180, 120, 60, 30, 15];
 exports.TTS_PREPARATION_LEAD_SECONDS = 20;
@@ -15,9 +16,15 @@ exports.LONG_ANNOUNCEMENT_REPEAT_AFTER_SECONDS = 10;
 exports.RETRY_DELAY_CAP_MS = 15_000;
 const LONG_ANNOUNCEMENT_COMMANDS = new Set(["480", "300", "240", "180", "120", "60"]);
 const MAX_DELAY_SECONDS = {
+    "480": 30,
+    "300": 30,
+    "240": 30,
+    "180": 30,
+    "120": 30,
+    "60": 15,
+    "30": 5,
     "0": 3,
     "15": 3,
-    "30": 10,
 };
 function getUpcomingAnnouncements(nextChangeTime) {
     return [
@@ -47,6 +54,7 @@ function markAnnouncementOnce(keys, key) {
 function getAnnouncementSpeechPolicy(command) {
     if (LONG_ANNOUNCEMENT_COMMANDS.has(command)) {
         return {
+            maxDelaySeconds: MAX_DELAY_SECONDS[command],
             retryUntilReady: true,
             repeatIfLateAfterSeconds: exports.LONG_ANNOUNCEMENT_REPEAT_AFTER_SECONDS,
         };
@@ -60,7 +68,12 @@ function shouldSkipLateAnnouncement(delaySeconds, maxDelaySeconds) {
     return delaySeconds >= maxDelaySeconds;
 }
 function getLateRepeatCount(delaySeconds, repeatAfterSeconds) {
-    return delaySeconds > repeatAfterSeconds ? 1 : 0;
+    return delaySeconds >= repeatAfterSeconds ? 1 : 0;
+}
+function isAnnouncementCycleActive(expectedNextChangeTime, currentNextChangeTime, expectedStarted, currentStarted) {
+    return (expectedStarted &&
+        currentStarted === true &&
+        currentNextChangeTime === expectedNextChangeTime);
 }
 function getExponentialRetryDelayMs(attempt) {
     const safeAttempt = Math.max(1, Math.floor(attempt));
