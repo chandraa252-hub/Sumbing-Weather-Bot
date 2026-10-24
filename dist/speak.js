@@ -8,6 +8,7 @@ exports.speak = speak;
 exports.speakCommand = speakCommand;
 const voice_1 = require("@discordjs/voice");
 const google_tts_api_1 = require("google-tts-api");
+const node_path_1 = require("node:path");
 const environment_1 = require("./environment");
 const languages_1 = require("./languages");
 const logger_1 = __importDefault(require("./services/logger"));
@@ -29,8 +30,11 @@ async function prepareSpeech(speech, locale) {
 }
 async function prepareSpeechCommand(command, args, languageKey) {
     const language = languages_1.LANGUAGES.find((candidate) => candidate.key === languageKey);
-    const speech = language?.voiceCommands[command]?.(args);
-    if (!language || speech === undefined) {
+    if (!language || language.audioCommands) {
+        return;
+    }
+    const speech = language.voiceCommands[command]?.(args);
+    if (speech === undefined) {
         return;
     }
     for (let attempt = 1; attempt <= 3; attempt += 1) {
@@ -63,6 +67,23 @@ async function playPreparedSpeech(prepared, connection) {
                 await new Promise((resolve) => setTimeout(resolve, pauseAfterMs));
             }
         }
+    }
+    finally {
+        subscription?.unsubscribe();
+        player.stop(true);
+    }
+}
+async function playAudioFile(audioPath, command, connection) {
+    if (connection.state.status !== voice_1.VoiceConnectionStatus.Ready) {
+        throw new Error(`Voice connection is not ready (state: ${connection.state.status})`);
+    }
+    if (environment_1.environment.logging.speak) {
+        logger_1.default.info(connection.joinConfig.guildId, `Play MP3 countdown cue "${command}"`);
+    }
+    const player = (0, voice_1.createAudioPlayer)();
+    const subscription = connection.subscribe(player);
+    try {
+        await playFile(player, (0, node_path_1.resolve)(process.cwd(), audioPath));
     }
     finally {
         subscription?.unsubscribe();
@@ -111,12 +132,15 @@ async function speakCommand(command, args, connection, languageKey, options = {}
     if (!language) {
         return;
     }
-    const { locale, voiceCommands } = language;
-    if (!voiceCommands[command]) {
+    const { locale, voiceCommands, audioCommands } = language;
+    const audioPath = audioCommands?.[command];
+    if ((audioCommands && !audioPath) || (!audioCommands && !voiceCommands[command])) {
         return;
     }
-    const speech = voiceCommands[command](args);
-    const text = toSegments(speech).map(({ text }) => text).join(" / ");
+    const speech = audioPath ? undefined : voiceCommands[command](args);
+    const text = audioPath
+        ? `MP3 countdown cue "${command}"`
+        : toSegments(speech).map(({ text }) => text).join(" / ");
     const guildId = connection.joinConfig.guildId;
     let activeConnection = connection;
     let firstPlaybackCompleted = false;
@@ -156,23 +180,27 @@ async function speakCommand(command, args, connection, languageKey, options = {}
                 if (skipIfStale()) {
                     return;
                 }
-                const prepared = await prepareSpeech(speech, locale);
+                const prepared = audioPath ? undefined : await prepareSpeech(speech, locale);
                 if (skipIfStale()) {
                     return;
                 }
+                const playAnnouncement = () => audioPath
+                    ? playAudioFile(audioPath, command, activeConnection)
+                    : playPreparedSpeech(prepared, activeConnection);
                 if (!firstPlaybackCompleted) {
                     const delaySeconds = options.dueAt === undefined ? 0 : (0, time_1.getTime)() - options.dueAt;
                     repeatRequired =
-                        options.repeatIfLateAfterSeconds !== undefined &&
+                        !audioPath &&
+                            options.repeatIfLateAfterSeconds !== undefined &&
                             (0, countdownPolicy_1.getLateRepeatCount)(delaySeconds, options.repeatIfLateAfterSeconds) > 0;
-                    await playPreparedSpeech(prepared, activeConnection);
+                    await playAnnouncement();
                     firstPlaybackCompleted = true;
                     if (repeatRequired) {
                         logger_1.default.info(guildId, `Repeating late voice announcement "${text}" (${delaySeconds}s late)`);
                     }
                 }
                 if (repeatRequired && !repeatCompleted) {
-                    await playPreparedSpeech(prepared, activeConnection);
+                    await playAnnouncement();
                     repeatCompleted = true;
                 }
                 return;

@@ -6,7 +6,7 @@ import { slashCommandHashRepo } from "../../persistence";
 import logger from "../../services/logger";
 
 /** Bump when slash command registration strategy changes (forces re-sync to all guilds). */
-const SLASH_COMMAND_REGISTRATION_VERSION = 24;
+const SLASH_COMMAND_REGISTRATION_VERSION = 25;
 
 export async function initCommands() {
     const commands = getSlashCommands();
@@ -146,6 +146,7 @@ export function getSlashCommands() {
                         { name: "English 🇬🇧 (default)", value: "en" },
                         { name: "English 🇺🇸", value: "en-us" },
                         { name: "Indonesia 🇮🇩", value: "id" },
+                        { name: "Indonesia 🇮🇩 (MP3)", value: "id-mp3" },
                         { name: "中文（简体）🇨🇳", value: "zh-cn" },
                         { name: "Filipino 🇵🇭", value: "fil" },
                         { name: "Français 🇫🇷", value: "fr" },

@@ -59,6 +59,22 @@ export const WEATHER_STATUS_COPY: Record<LanguageKey, WeatherStatusCopy> = {
             "saat Cuaca Buruk antara pukul 02:00 - 05:59.",
         ].join("\n"),
     },
+    "id-mp3": {
+        heading: "# ⚡ Cuaca Buruk Berikutnya",
+        timerStopped: "(timer global berhenti)",
+        remaining: (time) => `(${time} lagi)`,
+        starts: (relativeTime) => `(dimulai ${relativeTime})`,
+        tips: [
+            "⚠️ Bersiaplah menghadapi perubahan cuaca mendadak.",
+            "Berhati-hati saat cuaca badai petir.",
+            BLANK_LINE,
+            "☕ STMJ dianjurkan saat cuaca malam hari.",
+            "Durasi efek STMJ: 5 menit.",
+            BLANK_LINE,
+            "🪨 Di Watu Kotak, STMJ + Obor diperlukan",
+            "saat Cuaca Buruk antara pukul 02:00 - 05:59.",
+        ].join("\n"),
+    },
     "zh-cn": {
         heading: "# ⚡ 下一次极端天气",
         timerStopped: "(全局计时器已停止)",

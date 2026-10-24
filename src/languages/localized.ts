@@ -1,7 +1,7 @@
 import { formatWeatherName } from "../util/weatherDisplay";
 import type { Language, LanguageKey, Locale, VoiceCommands } from "./types";
 
-type LocalizedLanguageKey = Exclude<LanguageKey, "en" | "en-us" | "id">;
+type LocalizedLanguageKey = Exclude<LanguageKey, "en" | "en-us" | "id" | "id-mp3">;
 
 interface VoicePhrases {
     eightMinutes: string;
@@ -343,6 +343,7 @@ export const DEFAULT_WEATHER_NAMES: Record<LanguageKey, string> = {
     en: "extreme weather",
     "en-us": "extreme weather",
     id: "cuaca buruk",
+    "id-mp3": "cuaca buruk",
     "zh-cn": "极端天气",
     fil: "matinding panahon",
     fr: "météo extrême",

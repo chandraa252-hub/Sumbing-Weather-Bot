@@ -315,6 +315,7 @@ exports.DEFAULT_WEATHER_NAMES = {
     en: "extreme weather",
     "en-us": "extreme weather",
     id: "cuaca buruk",
+    "id-mp3": "cuaca buruk",
     "zh-cn": "极端天气",
     fil: "matinding panahon",
     fr: "météo extrême",

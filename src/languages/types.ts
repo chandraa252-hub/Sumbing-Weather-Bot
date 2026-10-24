@@ -12,6 +12,7 @@ export type LanguageKey =
     | "en"
     | "en-us"
     | "id"
+    | "id-mp3"
     | "zh-cn"
     | "fil"
     | "fr"
@@ -32,6 +33,7 @@ export interface Language {
     name: string;
     locale: Locale;
     voiceCommands: VoiceCommands;
+    audioCommands?: Record<string, string>;
 }
 
 export type Locale = GoogleTTSLanguage;
