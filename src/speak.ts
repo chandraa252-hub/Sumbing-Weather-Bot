@@ -121,9 +121,20 @@ async function playAudioFile(
 
     const player = createAudioPlayer();
     const subscription = connection.subscribe(player);
+    const playbackStartedAt = Date.now();
 
     try {
         await playFile(player, resolve(process.cwd(), audioPath));
+        logger.info(
+            connection.joinConfig.guildId,
+            `MP3 countdown cue "${command}" playback finished after ${Date.now() - playbackStartedAt}ms`
+        );
+    } catch (error) {
+        logger.warn(
+            connection.joinConfig.guildId,
+            `MP3 countdown cue "${command}" playback failed after ${Date.now() - playbackStartedAt}ms: ${error}`
+        );
+        throw error;
     } finally {
         subscription?.unsubscribe();
         player.stop(true);
@@ -139,6 +150,7 @@ async function playFile(player: ReturnType<typeof createAudioPlayer>, filename: 
 
     await new Promise<void>((resolve, reject) => {
         let settled = false;
+        let playbackStarted = false;
 
         const cleanup = () => {
             clearTimeout(timeout);
@@ -161,7 +173,10 @@ async function playFile(player: ReturnType<typeof createAudioPlayer>, filename: 
 
         const onError = (error: Error) => finish(error);
         const onStateChange = (_oldState: unknown, newState: { status: string }) => {
-            if (newState.status === AudioPlayerStatus.Idle) {
+            if (newState.status === AudioPlayerStatus.Playing) {
+                playbackStarted = true;
+            }
+            if (newState.status === AudioPlayerStatus.Idle && playbackStarted) {
                 finish();
             }
         };
