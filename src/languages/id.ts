@@ -9,10 +9,6 @@ const voiceCommands: VoiceCommands = {
     120: () => "2 menit tersisa.",
     60: () => "1 menit tersisa.",
     30: () => "30 detik tersisa.",
-    15: ({ nextAthlete }) => [
-        { text: `${formatWeatherName(String(nextAthlete))}, bersiap!`, pauseAfterMs: 2_000 },
-        { text: "Berganti dalam 10 detik." },
-    ],
     0: ({ nextAthlete, started }) =>
         started ? `Ganti ke ${formatWeatherName(String(nextAthlete))}.` : "Ayo mulai!",
     skip: ({ nextAthlete }) => `Ganti ke ${formatWeatherName(String(nextAthlete))}!`,
@@ -23,7 +19,4 @@ export const language: Language = {
     name: "Indonesia",
     locale: "id" as Locale,
     voiceCommands,
-    audioCommands: {
-        15: "assets/weather-audio/id-mp3/danger.mp3",
-    },
 };
