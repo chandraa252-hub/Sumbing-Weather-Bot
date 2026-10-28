@@ -22,4 +22,7 @@ exports.language = {
     name: "Indonesia",
     locale: "id",
     voiceCommands,
+    audioCommands: {
+        15: "assets/weather-audio/id-mp3/danger.mp3",
+    },
 };
