@@ -10,10 +10,6 @@ const voiceCommands = {
     120: () => "2 minutes remaining.",
     60: () => "1 minute remaining.",
     30: () => "30 seconds remaining.",
-    15: ({ nextAthlete }) => [
-        { text: `${(0, weatherDisplay_1.formatWeatherName)(String(nextAthlete))}, get ready.`, pauseAfterMs: 2_000 },
-        { text: "Change in 10 seconds." },
-    ],
     0: ({ nextAthlete, started }) => started ? `Changed to ${(0, weatherDisplay_1.formatWeatherName)(String(nextAthlete))}.` : "Let's go!",
     skip: ({ nextAthlete }) => `Change to ${(0, weatherDisplay_1.formatWeatherName)(String(nextAthlete))}.`,
 };
