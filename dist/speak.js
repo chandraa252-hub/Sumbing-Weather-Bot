@@ -30,7 +30,7 @@ async function prepareSpeech(speech, locale) {
 }
 async function prepareSpeechCommand(command, args, languageKey) {
     const language = languages_1.LANGUAGES.find((candidate) => candidate.key === languageKey);
-    if (!language || language.audioCommands) {
+    if (!language || language.audioCommands?.[command]) {
         return;
     }
     const speech = language.voiceCommands[command]?.(args);
@@ -144,7 +144,7 @@ async function speakCommand(command, args, connection, languageKey, options = {}
     }
     const { locale, voiceCommands, audioCommands } = language;
     const audioPath = audioCommands?.[command];
-    if ((audioCommands && !audioPath) || (!audioCommands && !voiceCommands[command])) {
+    if (!audioPath && !voiceCommands[command]) {
         return;
     }
     const speech = audioPath ? undefined : voiceCommands[command](args);
