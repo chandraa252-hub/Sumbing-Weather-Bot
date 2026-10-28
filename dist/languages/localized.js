@@ -299,10 +299,6 @@ function createVoiceCommands(phrases) {
         120: () => phrases.twoMinutes,
         60: () => phrases.oneMinute,
         30: () => phrases.thirtySeconds,
-        15: ({ nextAthlete }) => [
-            { text: phrases.weatherReady(formatWeather(nextAthlete)), pauseAfterMs: 2_000 },
-            { text: phrases.changeInTen },
-        ],
         0: ({ nextAthlete, started }) => started ? phrases.changedTo(formatWeather(nextAthlete)) : phrases.startNow,
         skip: ({ nextAthlete }) => phrases.skipTo(formatWeather(nextAthlete)),
     };
