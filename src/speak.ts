@@ -20,6 +20,7 @@ import {
     shouldSkipLateAnnouncement,
 } from "./countdownPolicy";
 
+const FIFTEEN_SECOND_AUDIO_PATH = "assets/weather-audio/id-mp3/danger.mp3";
 const speechQueues = new Map<string, Promise<void>>();
 function toSegments(speech: SpeechCommand): SpeechSegment[] {
     return typeof speech === "string" ? [{ text: speech }] : speech;
@@ -52,7 +53,7 @@ export async function prepareSpeechCommand(
     languageKey: LanguageKey
 ): Promise<void> {
     const language = LANGUAGES.find((candidate) => candidate.key === languageKey);
-    if (!language || language.audioCommands?.[command]) {
+    if (!language || command === "15" || language.audioCommands?.[command]) {
         return;
     }
 
@@ -214,7 +215,7 @@ export async function speakCommand(
     }
 
     const { locale, voiceCommands, audioCommands } = language;
-    const audioPath = audioCommands?.[command];
+    const audioPath = command === "15" ? FIFTEEN_SECOND_AUDIO_PATH : audioCommands?.[command];
     if (!audioPath && !voiceCommands[command]) {
         return;
     }
