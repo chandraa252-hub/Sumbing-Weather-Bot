@@ -16,6 +16,7 @@ const download_1 = require("./util/download");
 const time_1 = require("./util/time");
 const countdownPolicy_1 = require("./countdownPolicy");
 const FIFTEEN_SECOND_AUDIO_PATH = "assets/weather-audio/id-mp3/danger.mp3";
+const FIFTEEN_SECOND_AUDIO_VOLUME = 0.5;
 const speechQueues = new Map();
 function toSegments(speech) {
     return typeof speech === "string" ? [{ text: speech }] : speech;
@@ -85,7 +86,11 @@ async function playAudioFile(audioPath, command, connection) {
     const subscription = connection.subscribe(player);
     const playbackStartedAt = Date.now();
     try {
-        await playFile(player, (0, node_path_1.resolve)(process.cwd(), audioPath));
+        await playFile(
+            player,
+            (0, node_path_1.resolve)(process.cwd(), audioPath),
+            command === "15" ? FIFTEEN_SECOND_AUDIO_VOLUME : undefined
+        );
         logger_1.default.info(connection.joinConfig.guildId, `MP3 countdown cue "${command}" playback finished after ${Date.now() - playbackStartedAt}ms`);
     }
     catch (error) {
@@ -100,8 +105,14 @@ async function playAudioFile(audioPath, command, connection) {
 async function speak(speech, locale, connection) {
     await playPreparedSpeech(await prepareSpeech(speech, locale), connection);
 }
-async function playFile(player, filename) {
-    const resource = (0, voice_1.createAudioResource)(filename);
+async function playFile(player, filename, volume) {
+    const resource = (0, voice_1.createAudioResource)(filename, volume === undefined ? undefined : { inlineVolume: true });
+    if (volume !== undefined) {
+        if (!resource.volume) {
+            throw new Error("Inline volume transform is unavailable");
+        }
+        resource.volume.setVolume(volume);
+    }
     await new Promise((resolve, reject) => {
         let settled = false;
         let playbackStarted = false;
