@@ -23,4 +23,7 @@ export const language: Language = {
     name: "Indonesia",
     locale: "id" as Locale,
     voiceCommands,
+    audioCommands: {
+        15: "assets/weather-audio/id-mp3/danger.mp3",
+    },
 };
