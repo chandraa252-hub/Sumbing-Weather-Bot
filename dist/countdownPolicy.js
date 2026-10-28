@@ -16,13 +16,13 @@ exports.LONG_ANNOUNCEMENT_REPEAT_AFTER_SECONDS = 10;
 exports.RETRY_DELAY_CAP_MS = 15_000;
 const LONG_ANNOUNCEMENT_COMMANDS = new Set(["480", "300", "240", "180", "120", "60"]);
 const MAX_DELAY_SECONDS = {
-    "480": 30,
+    "480": 60,
     "300": 30,
     "240": 30,
     "180": 30,
     "120": 30,
     "60": 15,
-    "30": 5,
+    "30": 10,
     "0": 3,
     "15": 3,
 };
@@ -65,7 +65,7 @@ function getAnnouncementSpeechPolicy(command) {
     };
 }
 function shouldSkipLateAnnouncement(delaySeconds, maxDelaySeconds) {
-    return delaySeconds >= maxDelaySeconds;
+    return delaySeconds > maxDelaySeconds;
 }
 function getLateRepeatCount(delaySeconds, repeatAfterSeconds) {
     return delaySeconds >= repeatAfterSeconds ? 1 : 0;

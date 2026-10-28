@@ -50,40 +50,52 @@ test("prepares all cues, including zero, before their scheduled times", () => {
     assert.equal(upcoming.at(-1)?.dueAt, 1_000);
 });
 
-test("30-second cue expires at 5 seconds late and is not configured to retry", () => {
+test("30-second cue tolerates up to 10 seconds late without retrying", () => {
     const policy = getAnnouncementSpeechPolicy("30");
-    assert.equal(policy.maxDelaySeconds, 5);
+    assert.equal(policy.maxDelaySeconds, 10);
     assert.equal(policy.retryUntilReady, false);
     assert.equal(policy.repeatIfLateAfterSeconds, undefined);
-    assert.equal(shouldSkipLateAnnouncement(4, policy.maxDelaySeconds), false);
-    assert.equal(shouldSkipLateAnnouncement(5, policy.maxDelaySeconds), true);
+    assert.equal(shouldSkipLateAnnouncement(10, policy.maxDelaySeconds), false);
+    assert.equal(shouldSkipLateAnnouncement(11, policy.maxDelaySeconds), true);
 });
 
-test("15-second and zero cues retain their short stale limits", () => {
-    assert.equal(getAnnouncementSpeechPolicy("15").maxDelaySeconds, 3);
-    assert.equal(getAnnouncementSpeechPolicy("0").maxDelaySeconds, 3);
+test("15-second and transition cues have a 3-second limit and no repeat", () => {
+    for (const command of ["15", "0"]) {
+        const policy = getAnnouncementSpeechPolicy(command);
+        assert.equal(policy.maxDelaySeconds, 3);
+        assert.equal(policy.retryUntilReady, false);
+        assert.equal(policy.repeatIfLateAfterSeconds, undefined);
+        assert.equal(shouldSkipLateAnnouncement(3, policy.maxDelaySeconds), false);
+        assert.equal(shouldSkipLateAnnouncement(4, policy.maxDelaySeconds), true);
+    }
 });
 
-test("8-to-2-minute cues skip after 30 seconds and retry once when at least 10 seconds late", () => {
-    for (const command of ["480", "300", "240", "180", "120"]) {
+test("long reminders repeat once within their individual lateness limits", () => {
+    const eightMinutePolicy = getAnnouncementSpeechPolicy("480");
+    assert.equal(eightMinutePolicy.maxDelaySeconds, 60);
+    assert.equal(eightMinutePolicy.retryUntilReady, true);
+    assert.equal(eightMinutePolicy.repeatIfLateAfterSeconds, 10);
+    assert.equal(shouldSkipLateAnnouncement(60, eightMinutePolicy.maxDelaySeconds), false);
+    assert.equal(shouldSkipLateAnnouncement(61, eightMinutePolicy.maxDelaySeconds), true);
+
+    for (const command of ["300", "240", "180", "120"]) {
         const policy = getAnnouncementSpeechPolicy(command);
         assert.equal(policy.maxDelaySeconds, 30);
         assert.equal(policy.retryUntilReady, true);
         assert.equal(policy.repeatIfLateAfterSeconds, 10);
-        assert.equal(shouldSkipLateAnnouncement(29, policy.maxDelaySeconds), false);
-        assert.equal(shouldSkipLateAnnouncement(30, policy.maxDelaySeconds), true);
+        assert.equal(shouldSkipLateAnnouncement(30, policy.maxDelaySeconds), false);
+        assert.equal(shouldSkipLateAnnouncement(31, policy.maxDelaySeconds), true);
     }
 
     const oneMinutePolicy = getAnnouncementSpeechPolicy("60");
     assert.equal(oneMinutePolicy.maxDelaySeconds, 15);
     assert.equal(oneMinutePolicy.retryUntilReady, true);
     assert.equal(oneMinutePolicy.repeatIfLateAfterSeconds, 10);
-    assert.equal(shouldSkipLateAnnouncement(14, oneMinutePolicy.maxDelaySeconds), false);
-    assert.equal(shouldSkipLateAnnouncement(15, oneMinutePolicy.maxDelaySeconds), true);
+    assert.equal(shouldSkipLateAnnouncement(15, oneMinutePolicy.maxDelaySeconds), false);
+    assert.equal(shouldSkipLateAnnouncement(16, oneMinutePolicy.maxDelaySeconds), true);
 
     assert.equal(getLateRepeatCount(9, 10), 0);
     assert.equal(getLateRepeatCount(10, 10), 1);
-    assert.equal(getLateRepeatCount(120, 10), 1);
 });
 
 test("queued announcements are active only for the same running timer cycle", () => {

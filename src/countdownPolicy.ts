@@ -5,13 +5,13 @@ export const RETRY_DELAY_CAP_MS = 15_000;
 
 const LONG_ANNOUNCEMENT_COMMANDS = new Set(["480", "300", "240", "180", "120", "60"]);
 const MAX_DELAY_SECONDS: Record<string, number> = {
-    "480": 30,
+    "480": 60,
     "300": 30,
     "240": 30,
     "180": 30,
     "120": 30,
     "60": 15,
-    "30": 5,
+    "30": 10,
     "0": 3,
     "15": 3,
 };
@@ -80,7 +80,7 @@ export function getAnnouncementSpeechPolicy(command: string): AnnouncementSpeech
 }
 
 export function shouldSkipLateAnnouncement(delaySeconds: number, maxDelaySeconds: number): boolean {
-    return delaySeconds >= maxDelaySeconds;
+    return delaySeconds > maxDelaySeconds;
 }
 
 export function getLateRepeatCount(delaySeconds: number, repeatAfterSeconds: number): number {
