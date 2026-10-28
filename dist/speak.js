@@ -15,6 +15,7 @@ const logger_1 = __importDefault(require("./services/logger"));
 const download_1 = require("./util/download");
 const time_1 = require("./util/time");
 const countdownPolicy_1 = require("./countdownPolicy");
+const FIFTEEN_SECOND_AUDIO_PATH = "assets/weather-audio/id-mp3/danger.mp3";
 const speechQueues = new Map();
 function toSegments(speech) {
     return typeof speech === "string" ? [{ text: speech }] : speech;
@@ -30,7 +31,7 @@ async function prepareSpeech(speech, locale) {
 }
 async function prepareSpeechCommand(command, args, languageKey) {
     const language = languages_1.LANGUAGES.find((candidate) => candidate.key === languageKey);
-    if (!language || language.audioCommands?.[command]) {
+    if (!language || command === "15" || language.audioCommands?.[command]) {
         return;
     }
     const speech = language.voiceCommands[command]?.(args);
@@ -143,7 +144,7 @@ async function speakCommand(command, args, connection, languageKey, options = {}
         return;
     }
     const { locale, voiceCommands, audioCommands } = language;
-    const audioPath = audioCommands?.[command];
+    const audioPath = command === "15" ? FIFTEEN_SECOND_AUDIO_PATH : audioCommands?.[command];
     if (!audioPath && !voiceCommands[command]) {
         return;
     }
