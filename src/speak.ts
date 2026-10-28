@@ -52,7 +52,7 @@ export async function prepareSpeechCommand(
     languageKey: LanguageKey
 ): Promise<void> {
     const language = LANGUAGES.find((candidate) => candidate.key === languageKey);
-    if (!language || language.audioCommands) {
+    if (!language || language.audioCommands?.[command]) {
         return;
     }
 
@@ -215,7 +215,7 @@ export async function speakCommand(
 
     const { locale, voiceCommands, audioCommands } = language;
     const audioPath = audioCommands?.[command];
-    if ((audioCommands && !audioPath) || (!audioCommands && !voiceCommands[command])) {
+    if (!audioPath && !voiceCommands[command]) {
         return;
     }
     const speech = audioPath ? undefined : voiceCommands[command](args);
