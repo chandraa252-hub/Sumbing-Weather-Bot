@@ -86,11 +86,7 @@ async function playAudioFile(audioPath, command, connection) {
     const subscription = connection.subscribe(player);
     const playbackStartedAt = Date.now();
     try {
-        await playFile(
-            player,
-            (0, node_path_1.resolve)(process.cwd(), audioPath),
-            command === "15" ? FIFTEEN_SECOND_AUDIO_VOLUME : undefined
-        );
+        await playFile(player, (0, node_path_1.resolve)(process.cwd(), audioPath), command === "15" ? FIFTEEN_SECOND_AUDIO_VOLUME : undefined);
         logger_1.default.info(connection.joinConfig.guildId, `MP3 countdown cue "${command}" playback finished after ${Date.now() - playbackStartedAt}ms`);
     }
     catch (error) {
