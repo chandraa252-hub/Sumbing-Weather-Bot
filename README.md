@@ -158,7 +158,7 @@ when the global timer key does not exist.
 
 #### `/help`
 
-<img src="./docs/english-help.png" height="350">
+<img src="./docs/english-help.png" height="350" alt="Latest English help message">
 
 <img src="./docs/indonesian-help.png" height="350">
 
@@ -170,14 +170,18 @@ Example output:
 Help
 🌦️ Weather Timer
 /weather start — Turn on the global timer for this server. Join a voice channel first.
-/weather stop — Turn off the timer for this server. The status message remains available to start again.
+/weather stop — Turn off the timer for this server. The status message stays available to turn it back on.
 
 🔧 Other
-/join — Join your voice channel and show the soundboard.
+/join — Join your voice channel and stay there 24/7.
 /soundboard — Open the soundboard panel to play audio.
 /leave — Force disconnect the bot from voice.
 /language — Set the announcement language.
 /help — Show this help message.
+
+If the timer is out of sync, contact @SETIP belum tidur 24 jam or visit
+https://discord.com/users/762372166733529088.
+
 Discord Server (Questions/Feedback)
 https://discord.gg/jB3J3xfmGf
 
@@ -197,7 +201,7 @@ Made by UNIX_STEVE
 
 #### `/weather start`
 
-<img src="./docs/english-status.png" height="350">
+<img src="./docs/english-status.png" height="350" alt="Latest English weather status message">
 
 Starts the weather timer. The bot joins your current voice channel or uses the previous one and stays connected until `/leave`.
 
@@ -338,24 +342,21 @@ When a guild joins the global timer using `/weather start`, the bot sends a stat
 Example:
 
 ```text
-Current Weather
-🌩️ Extreme Weather (7m 14s remaining)
+⚡ Next Extreme Weather
+(4m 23s remaining)
 
-Next Extreme Weather
-
-
-⚠️ Stay prepared for sudden weather changes. ⚠️
+⚠️ Stay prepared for sudden weather changes.
 Be careful during thunderstorm weather.
 
 ☕ STMJ is recommended during nighttime weather.
 STMJ effect duration: 5 minutes.
 
-🪨 In Watu Kotak, STMJ + Torch is required
+☁️ In Watu Kotak, STMJ + Torch is required
 during Extreme Weather between 02:00 - 05:59.
 
 Controls:
-⏭️ Skip when extreme weather starts
-⏹️ Stop the weather timer or use /weather stop
+🟦 Stop the timer or use /weather stop
+❓ Press Help for usage instructions
 ```
 
 The message will continuously update based on the current timer and weather rotation.
@@ -368,6 +369,12 @@ Use the message buttons to stop the timer, open the soundboard, or show help wit
 | Soundboard | Opens the soundboard panel. |
 | Help | Shows command help. |
 
+
+## Soundboard
+
+Open the soundboard with `/soundboard` or the Soundboard button below the status message. Choose a sound button to play it in the bot's connected voice channel. The panel is private to the user who opened it. Use `/join` to join your voice channel or `/leave` to disconnect the bot.
+
+<img src="./docs/soundboard.png" height="268" alt="Soundboard panel with selectable sounds">
 
 ## Voice Commands
 
