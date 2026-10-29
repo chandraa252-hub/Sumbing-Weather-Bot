@@ -121,6 +121,10 @@ The PM2 path uses system Redis and the Docker path includes a persistent Redis
 container. Both paths load secrets from `.env`. Full VPS details are in
 [`deploy/README.md`](./deploy/README.md).
 
+Pushing to `vps-ready` does not deploy automatically. Start the `Deploy VPS`
+workflow manually in GitHub Actions or follow the update commands in
+[`deploy/README.md`](./deploy/README.md).
+
 ## Usage
 
 - All commands are case insensitive.
@@ -163,12 +167,17 @@ Shows a list of available commands, project links, and developer information.
 Example output:
 
 ```bash
-/weather start — Start the weather timer. Join a voice channel first.
-/weather stop — Stop the timer; the bot stays in voice.
-/help — Show this help message.
-/leave — Force disconnect bot from voice channel.
-/language — Set the announcement language.
+Help
+🌦️ Weather Timer
+/weather start — Turn on the global timer for this server. Join a voice channel first.
+/weather stop — Turn off the timer for this server. The status message remains available to start again.
 
+🔧 Other
+/join — Join your voice channel and show the soundboard.
+/soundboard — Open the soundboard panel to play audio.
+/leave — Force disconnect the bot from voice.
+/language — Set the announcement language.
+/help — Show this help message.
 Discord Server (Questions/Feedback)
 https://discord.gg/jB3J3xfmGf
 
@@ -179,9 +188,9 @@ Web App
 https://github.com/chandraa252-hub
 
 Support this project
-https://discord.com/users/762372166733529088
+https://sociabuzz.com/chandraa252
 
-Made by Stephanus Chandra Wijaya
+Made by UNIX_STEVE
 ```
 
 ---
@@ -261,18 +270,32 @@ This command is the only command that intentionally disconnects the bot from the
 Shows or changes the current announcement language.
 
 Available languages:
-- `en-gb` — English (British)
+- `en` — English (UK)
 - `en-us` — English (US)
 - `id` — Indonesian
+- `zh-cn` — Simplified Chinese
+- `fil` — Filipino
+- `fr` — French
+- `de` — German
+- `hi` — Hindi
+- `ja` — Japanese
+- `it` — Italian
+- `jv` — Javanese
+- `ms` — Malay
+- `pt` — Portuguese (Portugal)
+- `ru` — Russian
+- `su` — Sundanese
+- `th` — Thai
+- `ar` — Arabic
+- `es` — Spanish
 
 Changing the language automatically updates:
-- Voice announcements (TTS)
-- Spoken accent and pronunciation
+- TTS voice announcements, except for the shared 15-second audio cue
 - Help messages
 - Status messages
-- Weather names and labels
+- Default weather names and labels
 
-For example, selecting `id` changes all announcements into Indonesian and uses Indonesian voice pronunciation for TTS audio playback.
+The 15-second cue uses the same `danger.mp3` in every language at 50% playback volume.
 
 Example:
 ```bash
@@ -310,7 +333,7 @@ Kontrol:
 
 ## Status Message
 
-When starting the timer using `/weather start`, a message is sent to the current channel. This message automatically updates and shows the current weather, the next-weather label, and additional information or warnings.
+When a guild joins the global timer using `/weather start`, the bot sends a status embed to the command channel. It displays the synchronized next-change countdown, localized tips, and Stop, Soundboard, and Help buttons. It refreshes on timer transitions and every ten seconds while running.
 
 Example:
 
@@ -337,23 +360,31 @@ Controls:
 
 The message will continuously update based on the current timer and weather rotation.
 
-The bot automatically reacts with control emojis to this message. These can be used as buttons to control the bot without typing commands.
+Use the message buttons to stop the timer, open the soundboard, or show help without typing slash commands.
 
-| Emoji | Equivalent Slash Command | Note                                      |
-| ----- | ------------------------ | ----------------------------------------- |
-| ⏭️    | `/weather skip`    | Skip to the next weather in the rotation  |
-| ⏹️    | `/weather stop`    | Stop the timer; the bot stays in voice    |
+| Button | Action |
+| --- | --- |
+| Stop timer | Stops the timer but keeps the bot in voice. |
+| Soundboard | Opens the soundboard panel. |
+| Help | Shows command help. |
 
 
 ## Voice Commands
 
-The bot automatically gives voice notifications 5/10/15/30 seconds and 1/3/5 minutes before a weather change or before the timer starts.
+The bot announces countdowns at 8, 5, 4, 3, 2, and 1 minute, plus 30 and 15 seconds, before the next weather change. It also announces when the timer starts or switches weather.
 
-A voice notification is also played when:
-- the timer starts
-- switching to the next weather
-- skipping the current weather
+The 15-second cue uses `assets/weather-audio/id-mp3/danger.mp3` at 50% playback volume in every language. All other countdown cues use TTS in the selected language.
 
+Late announcements use these limits. Cues later than their limit are skipped; cues exactly at the limit remain eligible. Cues from a previous timer cycle are discarded.
+
+| Announcement | Maximum lateness | Repeat |
+| --- | ---: | --- |
+| 8 minutes | 60 seconds | Once if at least 10 seconds late |
+| 5, 4, 3, or 2 minutes | 30 seconds | Once if at least 10 seconds late |
+| 1 minute | 15 seconds | Once if at least 10 seconds late |
+| 30 seconds | 10 seconds | No |
+| 15 seconds | 3 seconds | No |
+| Timer start or weather change | 3 seconds | No |
 ## Parallel Timers
 
 Discord does not allow a bot to join multiple voice channels at the same time.
@@ -388,24 +419,18 @@ The source code of this project is publicly available on GitHub.
 | Slash commands are not visible               | Try reinviting the bot using the installation link                               |
 | The bot does not respond to commands         | Make sure the bot has permission to read and send messages in the channel        |
 | The timer does not start                     | Ensure you are connected to a voice channel before running `/weather start`       |
-| The skip button does not work                | Make sure the bot has permission to manage messages and reactions                |
 | The bot does not join voice channel          | Check voice channel permissions (Connect & Speak)
 | Global timer returned to defaults            | Check that Redis persistence is enabled and that its data directory or Docker volume was not deleted |
 | `/admin-message` missed a guild              | Check that the bot can View Channel and Send Messages in at least one text channel |
 
-## Recent Beta Development Updates
+## Current Runtime Notes
 
-- Added new commands and fixed voice channel disconnection issues
-- Updated commands and language options for better user experience
-- Added Indonesian language support for bot announcements and commands
-- Fixed error when starting the bot via PM2 on Windows
-- Updated timer commands and bot configuration settings
-- Updated countdown timer to refresh every ten seconds
-- Saved timer progress at the end of the loop
-- Added project overview and setup instructions to README
+- Countdown logic checks every second; status-message updates are coalesced and refreshed every ten seconds while running.
+- Audio announcements are queued per guild, and announcements from previous timer cycles are discarded.
+- Each countdown cue has its own lateness limit; only the 8-minute through 1-minute reminders can repeat once.
+- The global timer state is stored in Redis and survives bot restarts when Redis persistence is enabled.
 
 ---
-
 
 ## Need help?
 
