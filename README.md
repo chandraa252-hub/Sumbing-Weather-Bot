@@ -160,8 +160,6 @@ when the global timer key does not exist.
 
 <img src="./docs/english-help.png" height="350" alt="Latest English help message">
 
-<img src="./docs/indonesian-help.png" height="350">
-
 Shows a list of available commands, project links, and developer information.
 
 Example output:
