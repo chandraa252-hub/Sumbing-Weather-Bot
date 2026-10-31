@@ -437,6 +437,17 @@ The source code of this project is publicly available on GitHub.
 
 ---
 
+## Legal & Privacy
+
+By using Sumbing Weather Timer, you agree to the following policies:
+
+- [Terms of Service](https://chandraa252-hub.github.io/Sumbing-Weather-Bot/terms.html)
+- [Privacy Policy](https://chandraa252-hub.github.io/Sumbing-Weather-Bot/privacy.html)
+
+For questions or data-related requests, please contact us through our [Discord Support Server](https://discord.gg/jB3J3xfmGf).
+
+---
+
 ## Need help?
 
 Join the Discord server for questions, feedback, or support:
