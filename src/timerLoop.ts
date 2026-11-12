@@ -5,7 +5,7 @@ import { configRepo } from "./persistence";
 import { timerRepo } from "./persistence";
 import { globalTimerRepo } from "./persistence";
 import logger from "./services/logger";
-import { updateStatusMessage } from "./services/statusMessage";
+import { updateStatusMessage, type StatusUpdatePriority } from "./services/statusMessage";
 import { getNextAthleteIndex } from "./services/timer";
 import { getGlobalTimerSnapshot } from "./services/globalTimer";
 import {
@@ -23,7 +23,8 @@ import { getVoiceConnection } from "./util/getVoiceConnection";
 import { getTime } from "./util/time";
 
 const INTERVAL = 1_000;
-const STATUS_UPDATE_INTERVAL = 10;
+const STATUS_UPDATE_LONG_INTERVAL = 60;
+const STATUS_UPDATE_SHORT_INTERVAL = 20;
 
 let timerLoopStart: number;
 const guildTickQueues = new Map<string, Promise<void>>();
@@ -31,7 +32,7 @@ const announcedByTimer = new Map<
     string,
     { nextChangeTime: number; started: boolean; keys: Set<string>; preparedKeys: Set<string> }
 >();
-const statusUpdateStates = new Map<string, { pending: boolean; running: boolean }>();
+const lastStatusUpdateAt = new Map<string, number>();
 
 export function startTimerLoop() {
     logger.info(undefined, "Starting timer loop");
@@ -88,42 +89,10 @@ function enqueueTimerTick(timer: Timer, now: number): void {
     }).catch(() => undefined);
 }
 
-function enqueueStatusUpdate(guildId: string, scope: Scope): void {
-    const state = statusUpdateStates.get(guildId) ?? { pending: false, running: false };
-    statusUpdateStates.set(guildId, state);
-    state.pending = true;
-
-    if (state.running) {
-        return;
-    }
-
-    state.running = true;
-    void processStatusUpdates(guildId, state, scope);
-}
-
-async function processStatusUpdates(
-    guildId: string,
-    state: { pending: boolean; running: boolean },
-    scope: Scope
-): Promise<void> {
-    try {
-        while (state.pending) {
-            state.pending = false;
-            await updateStatusMessage(guildId, scope);
-        }
-    } catch (error) {
+function enqueueStatusUpdate(guildId: string, scope: Scope, priority: StatusUpdatePriority): void {
+    void updateStatusMessage(guildId, scope, { priority }).catch((error) => {
         logger.warn(guildId, `Status update worker failed; will retry: ${error}`);
-    } finally {
-        if (state.pending) {
-            void processStatusUpdates(guildId, state, scope);
-            return;
-        }
-
-        state.running = false;
-        if (statusUpdateStates.get(guildId) === state) {
-            statusUpdateStates.delete(guildId);
-        }
-    }
+    });
 }
 
 async function tickTimer(timer: Timer, now: number): Promise<void> {
@@ -136,6 +105,7 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
         const latestTimer = await timerRepo.get(timer.guildId);
         if (!latestTimer) {
             announcedByTimer.delete(timer.guildId);
+            lastStatusUpdateAt.delete(timer.guildId);
             return;
         }
         timer = latestTimer;
@@ -143,6 +113,7 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
         const globalState = await globalTimerRepo.get();
         if (!globalState) {
             announcedByTimer.delete(timer.guildId);
+            lastStatusUpdateAt.delete(timer.guildId);
             return;
         }
         if (globalState.status === "running" && globalState.stopAt !== undefined && now >= globalState.stopAt) {
@@ -207,10 +178,18 @@ async function tickTimer(timer: Timer, now: number): Promise<void> {
         const nextAthleteName = config.athletes[
             transitioned ? timer.currentAthleteIndex : getNextAthleteIndex(config, timer)
         ].name;
-        if (timer.status && timer.started && (transitioned || now % STATUS_UPDATE_INTERVAL === 0)) {
-            // Discord REST delays must not hold up the timer transition or TTS.
-            // The worker coalesces ticks while an update is still in flight.
-            enqueueStatusUpdate(timer.guildId, scope);
+        const statusUpdateNow = getTime();
+        const remainingSeconds = timer.nextChangeTime - statusUpdateNow;
+        const statusUpdateInterval = remainingSeconds > STATUS_UPDATE_LONG_INTERVAL
+            ? STATUS_UPDATE_LONG_INTERVAL
+            : STATUS_UPDATE_SHORT_INTERVAL;
+        const lastStatusUpdate = lastStatusUpdateAt.get(timer.guildId);
+        const statusUpdateDue =
+            lastStatusUpdate === undefined || statusUpdateNow - lastStatusUpdate >= statusUpdateInterval;
+        if (timer.status && timer.started && (transitioned || statusUpdateDue)) {
+            lastStatusUpdateAt.set(timer.guildId, statusUpdateNow);
+            // The global REST queue runs independently so it cannot delay timer transitions or TTS.
+            enqueueStatusUpdate(timer.guildId, scope, transitioned ? "transition" : "regular");
         }
 
         let timerAnnouncements = announcedByTimer.get(timer.guildId);

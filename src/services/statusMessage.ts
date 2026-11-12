@@ -16,6 +16,24 @@ import logger from "./logger";
 export const BUTTON_STOP = "timer_stop";
 export const BUTTON_HELP = "timer_help";
 
+export type StatusUpdatePriority = "transition" | "regular";
+type StatusUpdateOptions = { priority?: StatusUpdatePriority };
+type StatusUpdateJob = {
+    guildId: string;
+    scope?: Scope;
+    priority: StatusUpdatePriority;
+    waiters: Array<{ resolve: () => void; reject: (error: unknown) => void }>;
+};
+
+const INTER_GUILD_STATUS_DELAY_MS = 250;
+const statusUpdateQueue: StatusUpdateJob[] = [];
+const queuedStatusUpdatesByGuild = new Map<string, StatusUpdateJob>();
+let statusUpdateWorkerRunning = false;
+
+function delay(milliseconds: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
 /** Discord collapses extra `\n` in embeds; braille blank lines keep visible vertical space. */
 const BLANK_LINE = "\u2800";
 /** Single gap between the next-weather label and tips. */
@@ -126,7 +144,65 @@ export async function sendStatusMessage(channel: TextChannel, _scope: Scope) {
     }
 }
 
-export async function updateStatusMessage(guildId: string, _scope?: Scope) {
+export function updateStatusMessage(
+    guildId: string,
+    scope?: Scope,
+    options: StatusUpdateOptions = {}
+): Promise<void> {
+    const priority = options.priority ?? "regular";
+    return new Promise((resolve, reject) => {
+        const queuedJob = queuedStatusUpdatesByGuild.get(guildId);
+        if (queuedJob) {
+            if (priority === "transition") {
+                queuedJob.priority = "transition";
+            }
+            queuedJob.waiters.push({ resolve, reject });
+        } else {
+            const job: StatusUpdateJob = {
+                guildId,
+                scope,
+                priority,
+                waiters: [{ resolve, reject }],
+            };
+            queuedStatusUpdatesByGuild.set(guildId, job);
+            statusUpdateQueue.push(job);
+        }
+
+        if (!statusUpdateWorkerRunning) {
+            statusUpdateWorkerRunning = true;
+            void processStatusUpdateQueue();
+        }
+    });
+}
+
+async function processStatusUpdateQueue(): Promise<void> {
+    try {
+        while (statusUpdateQueue.length > 0) {
+            const transitionIndex = statusUpdateQueue.findIndex((job) => job.priority === "transition");
+            const [job] = statusUpdateQueue.splice(transitionIndex >= 0 ? transitionIndex : 0, 1);
+            queuedStatusUpdatesByGuild.delete(job.guildId);
+
+            try {
+                await updateStatusMessageNow(job.guildId, job.scope);
+                job.waiters.forEach(({ resolve }) => resolve());
+            } catch (error) {
+                job.waiters.forEach(({ reject }) => reject(error));
+            }
+
+            if (statusUpdateQueue.length > 0) {
+                await delay(INTER_GUILD_STATUS_DELAY_MS);
+            }
+        }
+    } finally {
+        statusUpdateWorkerRunning = false;
+        if (statusUpdateQueue.length > 0) {
+            statusUpdateWorkerRunning = true;
+            void processStatusUpdateQueue();
+        }
+    }
+}
+
+async function updateStatusMessageNow(guildId: string, _scope?: Scope): Promise<void> {
     const [config, timer, globalState] = await Promise.all([
         configRepo.get(guildId),
         timerRepo.get(guildId),
